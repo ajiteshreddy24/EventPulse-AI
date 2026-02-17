@@ -6,10 +6,10 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ajiteshreddy24/EventPulse-AI/backend/internal/db"
-	"github.com/ajiteshreddy24/EventPulse-AI/backend/internal/handlers"
-	"github.com/ajiteshreddy24/EventPulse-AI/backend/internal/repository"
-	"github.com/ajiteshreddy24/EventPulse-AI/backend/internal/service"
+	"github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/db"
+	"github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/handlers"
+	"github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/queries"
+	"github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/models"
 )
 
 func main() {
