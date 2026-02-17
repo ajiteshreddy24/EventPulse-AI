@@ -9,13 +9,13 @@ import (
 	"github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/db"
 	"github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/handlers"
 	"github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/queries"
-	"github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/models"
+	"github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/service"
 )
 
 func main() {
 	db.Connect()
 
-	repo := &repository.EventRepository{DB: db.DB}
+	repo := &queries.EventRepository{DB: db.DB}
 	service := &service.EventService{Repo: repo}
 	handler := &handlers.EventHandler{Service: service}
 

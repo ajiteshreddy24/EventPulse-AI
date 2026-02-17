@@ -6,7 +6,7 @@ import (
 )
 
 type EventService struct {
-	Repo *repository.EventRepository
+	Repo *queries.EventRepository
 }
 
 func (s *EventService) CreateEvent(e *models.Event) error {
