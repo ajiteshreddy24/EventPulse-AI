@@ -1,20 +1,29 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
-	"github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/db"
+	"github.com/gorilla/mux"
+
+	"github.com/ajiteshreddy24/EventPulse-AI/backend/internal/db"
+	"github.com/ajiteshreddy24/EventPulse-AI/backend/internal/handlers"
+	"github.com/ajiteshreddy24/EventPulse-AI/backend/internal/repository"
+	"github.com/ajiteshreddy24/EventPulse-AI/backend/internal/service"
 )
 
 func main() {
 	db.Connect()
 
-	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "EventPulse-AI running 🚀")
-	})
+	repo := &repository.EventRepository{DB: db.DB}
+	service := &service.EventService{Repo: repo}
+	handler := &handlers.EventHandler{Service: service}
 
-	fmt.Println("Server running on port 8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	r := mux.NewRouter()
+
+	r.HandleFunc("/events", handler.CreateEvent).Methods("POST")
+	r.HandleFunc("/events", handler.GetEvents).Methods("GET")
+
+	log.Println("Server running on :8080")
+	log.Fatal(http.ListenAndServe(":8080", r))
 }
