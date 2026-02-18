@@ -14,7 +14,7 @@ a {
 }
 
 .home {
-  height: 90vh;
+  height: 90vh; /* length measurements */
   background: url("/background.jpg") center/cover;
   display: flex;
   flex-direction: column;
