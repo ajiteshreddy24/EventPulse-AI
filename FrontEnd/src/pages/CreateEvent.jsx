@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createEvent } from "../api";
+import { createEvent } from "../api"; /*event creation*/
 
 export default function CreateEvent() {
   const [form, setForm] = useState({
