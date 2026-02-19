@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { createEvent } from "../api"; /*event creation*/
+import { createEvent } from "../api";
 
 export default function CreateEvent() {
+  const navigate = useNavigate();
+
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -17,9 +19,18 @@ export default function CreateEvent() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await createEvent(form);
-    setMessage("Event created successfully!");
-    setForm({ title: "", description: "", location: "", event_date: "" });
+
+    try {
+      await createEvent(form);
+      setMessage("Event created successfully!");
+
+      // Redirect to Events page after creation
+      setTimeout(() => {
+        navigate("/events");
+      }, 1000);
+    } catch (err) {
+      setMessage("Failed to create event.");
+    }
   };
 
   return (
@@ -27,11 +38,39 @@ export default function CreateEvent() {
       <h2>Create Event</h2>
 
       <form onSubmit={handleSubmit}>
-        <input name="title" placeholder="Title" value={form.title} onChange={handleChange} required />
-        <input name="description" placeholder="Description" value={form.description} onChange={handleChange} required />
-        <input name="location" placeholder="Location" value={form.location} onChange={handleChange} required />
-        <input type="datetime-local" name="event_date" value={form.event_date} onChange={handleChange} required />
-        <button type="submit">Create</button>
+        <input
+          name="title"
+          placeholder="Title"
+          value={form.title}
+          onChange={handleChange}
+          required
+        />
+
+        <input
+          name="description"
+          placeholder="Description"
+          value={form.description}
+          onChange={handleChange}
+          required
+        />
+
+        <input
+          name="location"
+          placeholder="Location"
+          value={form.location}
+          onChange={handleChange}
+          required
+        />
+
+        <input
+          type="datetime-local"
+          name="event_date"
+          value={form.event_date}
+          onChange={handleChange}
+          required
+        />
+
+        <button type="submit">Create Event</button>
       </form>
 
       {message && <p className="success">{message}</p>}
