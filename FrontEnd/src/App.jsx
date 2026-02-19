@@ -6,9 +6,9 @@ import Events from "./pages/Events";
 export default function App() {
   return (
     <BrowserRouter>
-      <nav style={{ padding: "10px", background: "#f4f4f4" }}>
-        <Link to="/" style={{ marginRight: "10px" }}>Home</Link>
-        <Link to="/create" style={{ marginRight: "10px" }}>Create Event</Link>
+      <nav className="navbar">
+        <Link to="/">Home</Link>
+        <Link to="/create">Create Event</Link>
         <Link to="/events">Upcoming Events</Link>
       </nav>
 

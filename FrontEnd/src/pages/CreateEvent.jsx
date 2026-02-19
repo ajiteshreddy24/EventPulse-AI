@@ -30,10 +30,8 @@ export default function CreateEvent() {
       await createEvent(payload);
       setMessage("Event created successfully!");
 
-      setTimeout(() => {
-        navigate("/events");
-      }, 1000);
-    } catch (err) {
+      setTimeout(() => navigate("/events"), 800);
+    } catch {
       setMessage("Failed to create event");
     }
   };

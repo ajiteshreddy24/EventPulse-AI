@@ -12,10 +12,10 @@ export default function Events() {
     <div className="page">
       <h2>Upcoming Events</h2>
 
-      {events.length === 0 && <p>No events available</p>}
+      {events.length === 0 && <p>No events found</p>}
 
       {events.map((event) => (
-        <div key={event.id} style={{ border: "1px solid #ccc", padding: "10px", margin: "10px 0" }}>
+        <div key={event.id} className="card">
           <h3>{event.title}</h3>
           <p>{event.description}</p>
           <p><b>Location:</b> {event.location}</p>
