@@ -1,5 +1,3 @@
-const API_URL = "http://localhost:8080";
-
 export async function createEvent(data) {
   const res = await fetch(`${API_URL}/events`, {
     method: "POST",
@@ -8,16 +6,10 @@ export async function createEvent(data) {
   });
 
   if (!res.ok) {
-    throw new Error("Failed to create event");
+    const errorText = await res.text();
+    console.error("Backend error:", errorText);
+    throw new Error(errorText);
   }
 
-  return res.json();
-}
-
-export async function getEvents() {
-  const res = await fetch(`${API_URL}/events`);
-  if (!res.ok) {
-    throw new Error("Failed to fetch events");
-  }
   return res.json();
 }
