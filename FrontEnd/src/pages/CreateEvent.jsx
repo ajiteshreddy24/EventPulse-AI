@@ -20,14 +20,7 @@ export default function CreateEvent() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await createEvent(form);
-    setMessage("Event created successfully!");
 
-<<<<<<< HEAD
-    setTimeout(() => {
-      navigate("/events");
-    }, 1000);
-=======
     try {
       const payload = {
         ...form,
@@ -43,19 +36,48 @@ export default function CreateEvent() {
     } catch (err) {
       setMessage("Failed to create event");
     }
->>>>>>> frontend
   };
 
   return (
     <div className="page">
       <h2>Create Event</h2>
+
       <form onSubmit={handleSubmit}>
-        <input name="title" value={form.title} onChange={handleChange} />
-        <input name="description" value={form.description} onChange={handleChange} />
-        <input name="location" value={form.location} onChange={handleChange} />
-        <input type="datetime-local" name="event_date" value={form.event_date} onChange={handleChange} />
+        <input
+          name="title"
+          placeholder="Title"
+          value={form.title}
+          onChange={handleChange}
+          required
+        />
+
+        <input
+          name="description"
+          placeholder="Description"
+          value={form.description}
+          onChange={handleChange}
+          required
+        />
+
+        <input
+          name="location"
+          placeholder="Location"
+          value={form.location}
+          onChange={handleChange}
+          required
+        />
+
+        <input
+          type="datetime-local"
+          name="event_date"
+          value={form.event_date}
+          onChange={handleChange}
+          required
+        />
+
         <button type="submit">Create Event</button>
       </form>
+
       {message && <p className="success">{message}</p>}
     </div>
   );
