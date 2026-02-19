@@ -3,39 +3,23 @@ import { getEvents } from "../api";
 
 export default function Events() {
   const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchEvents() {
-      try {
-        const data = await getEvents();
-        setEvents(data);
-      } catch (err) {
-        console.error("Failed to fetch events", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchEvents();
+    getEvents().then(setEvents).catch(console.error);
   }, []);
-
-  if (loading) return <p>Loading events...</p>;
 
   return (
     <div className="page">
       <h2>Upcoming Events</h2>
 
-      {events.length === 0 && <p>No events found.</p>}
+      {events.length === 0 && <p>No events available</p>}
 
       {events.map((event) => (
-        <div key={event.id} className="card">
+        <div key={event.id} style={{ border: "1px solid #ccc", padding: "10px", margin: "10px 0" }}>
           <h3>{event.title}</h3>
           <p>{event.description}</p>
           <p><b>Location:</b> {event.location}</p>
-          <p>
-            <b>Date:</b> {new Date(event.event_date).toLocaleString()}
-          </p>
+          <p><b>Date:</b> {new Date(event.event_date).toLocaleString()}</p>
         </div>
       ))}
     </div>
