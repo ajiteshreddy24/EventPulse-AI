@@ -1,5 +1,8 @@
 import { useState } from "react";
+<<<<<<< HEAD
+=======
 import { useNavigate } from "react-router-dom";
+>>>>>>> frontend
 import { createEvent } from "../api";
 
 export default function CreateEvent() {
@@ -22,19 +25,15 @@ export default function CreateEvent() {
     e.preventDefault();
 
     try {
-      const payload = {
-        ...form,
-        event_date: new Date(form.event_date).toISOString()
-      };
-
-      await createEvent(payload);
+      await createEvent(form);
       setMessage("Event created successfully!");
 
+      // Redirect to Events page after creation
       setTimeout(() => {
         navigate("/events");
       }, 1000);
     } catch (err) {
-      setMessage("Failed to create event");
+      setMessage("Failed to create event.");
     }
   };
 
@@ -82,3 +81,6 @@ export default function CreateEvent() {
     </div>
   );
 }
+git add FrontEnd/src/pages/CreateEvent.jsx
+
+
