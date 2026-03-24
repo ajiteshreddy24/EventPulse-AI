@@ -24,6 +24,7 @@ func main() {
 	r.HandleFunc("/events", handler.CreateEvent).Methods("POST")
 	r.HandleFunc("/events", handler.GetEvents).Methods("GET")
 	r.HandleFunc("/events/{id}", handler.UpdateEvent).Methods("PUT")
+	r.HandleFunc("/events/{id}", handler.DeleteEvent).Methods("DELETE")
 
 	log.Println("Server running on :8080")
 	log.Fatal(http.ListenAndServe(":8080", r))

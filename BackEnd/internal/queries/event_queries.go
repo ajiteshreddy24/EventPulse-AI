@@ -61,3 +61,8 @@ func (r *EventRepository) GetAll() ([]models.Event, error) {
 	}
 	return events, nil
 }
+
+func (r *EventRepository) Delete(id int) error {
+	_, err := r.DB.Exec(`DELETE FROM events WHERE id = $1`, id)
+	return err
+}
