@@ -20,3 +20,7 @@ func (s *EventService) GetEvents() ([]models.Event, error) {
 func (s *EventService) UpdateEvent(e *models.Event) error {
 	return s.Repo.Update(e)
 }
+
+func (s *EventService) DeleteEvent(id int) error {
+	return s.Repo.Delete(id)
+}

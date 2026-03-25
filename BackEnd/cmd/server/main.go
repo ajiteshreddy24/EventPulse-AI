@@ -32,6 +32,7 @@ func main() {
 	r.HandleFunc("/events", handler.CreateEvent).Methods("POST")
 	r.HandleFunc("/events", handler.GetEvents).Methods("GET")
 	r.HandleFunc("/events/{id}", handler.UpdateEvent).Methods("PUT")
+	r.HandleFunc("/events/{id}", handler.DeleteEvent).Methods("DELETE")
 	r.HandleFunc("/auth/register", authHandler.Register).Methods("POST")
 	r.HandleFunc("/auth/login", authHandler.Login).Methods("POST")
 	r.Handle("/auth/me", authMW.RequireAuth(http.HandlerFunc(authHandler.Me))).Methods("GET")
