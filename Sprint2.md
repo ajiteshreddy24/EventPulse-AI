@@ -1,4 +1,4 @@
-# GatorHive – Sprint 2 Completion Report
+# EventPulseAI – Sprint 2 Completion Report
 
 ## Sprint 2 Overview
 
