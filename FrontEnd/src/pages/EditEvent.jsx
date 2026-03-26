@@ -1,6 +1,6 @@
-import { useParams, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
-import { updateEvent } from '../api'
+import { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { getEvents, updateEvent } from '../api'
 
 export default function EditEvent() {
   const { id } = useParams()
@@ -13,18 +13,33 @@ export default function EditEvent() {
     event_date: '',
   })
 
+  useEffect(() => {
+    async function loadEvent() {
+      const events = await getEvents()
+      const event = events.find((e) => e.id === parseInt(id))
+
+      if (event) {
+        setForm({
+          ...event,
+          event_date: event.event_date.slice(0, 16),
+        })
+      }
+    }
+
+    loadEvent()
+  }, [id])
+
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value })
 
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    const payload = {
+    await updateEvent(id, {
       ...form,
       event_date: new Date(form.event_date).toISOString(),
-    }
+    })
 
-    await updateEvent(id, payload)
     navigate('/events')
   }
 
@@ -33,11 +48,42 @@ export default function EditEvent() {
       <h2>Edit Event</h2>
 
       <form onSubmit={handleSubmit}>
-        <input name="title" onChange={handleChange} required />
-        <textarea name="description" onChange={handleChange} required />
-        <input name="location" onChange={handleChange} required />
-        <input type="datetime-local" name="event_date" onChange={handleChange} required />
-        <button type="submit">Update Event</button>
+        <input
+          data-cy="title-input"
+          name="title"
+          value={form.title}
+          onChange={handleChange}
+          required
+        />
+
+        <textarea
+          data-cy="description-input"
+          name="description"
+          value={form.description}
+          onChange={handleChange}
+          required
+        />
+
+        <input
+          data-cy="location-input"
+          name="location"
+          value={form.location}
+          onChange={handleChange}
+          required
+        />
+
+        <input
+          data-cy="date-input"
+          type="datetime-local"
+          name="event_date"
+          value={form.event_date}
+          onChange={handleChange}
+          required
+        />
+
+        <button data-cy="update-btn">
+          Update Event
+        </button>
       </form>
     </div>
   )

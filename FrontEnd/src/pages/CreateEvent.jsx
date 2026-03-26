@@ -32,11 +32,41 @@ export default function CreateEvent() {
       <h2>Create Event</h2>
 
       <form onSubmit={handleSubmit}>
-        <input name="title" placeholder="Title" onChange={handleChange} required />
-        <textarea name="description" placeholder="Description" onChange={handleChange} required />
-        <input name="location" placeholder="Location" onChange={handleChange} required />
-        <input type="datetime-local" name="event_date" onChange={handleChange} required />
-        <button type="submit">Create Event</button>
+        <input
+          data-cy="title-input"
+          name="title"
+          placeholder="Title"
+          onChange={handleChange}
+          required
+        />
+
+        <textarea
+          data-cy="description-input"
+          name="description"
+          placeholder="Description"
+          onChange={handleChange}
+          required
+        />
+
+        <input
+          data-cy="location-input"
+          name="location"
+          placeholder="Location"
+          onChange={handleChange}
+          required
+        />
+
+        <input
+          data-cy="date-input"
+          type="datetime-local"
+          name="event_date"
+          onChange={handleChange}
+          required
+        />
+
+        <button data-cy="create-btn" type="submit">
+          Create Event
+        </button>
       </form>
     </div>
   )
