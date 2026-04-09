@@ -16,12 +16,16 @@ type UserRepository struct {
 }
 
 func (r *UserRepository) Create(user *models.User) error {
-	query := `
-	INSERT INTO users (name, email, password_hash)
-	VALUES ($1, $2, $3)
-	RETURNING id, created_at`
+	err := r.DB.QueryRow(`
+		INSERT INTO users (name, email, password_hash)
+		VALUES ($1, $2, $3)
+		RETURNING id, created_at
+	`,
+		user.Name,
+		user.Email,
+		user.PasswordHash,
+	).Scan(&user.ID, &user.CreatedAt)
 
-	err := r.DB.QueryRow(query, user.Name, user.Email, user.PasswordHash).Scan(&user.ID, &user.CreatedAt)
 	if err != nil && strings.Contains(strings.ToLower(err.Error()), "unique") {
 		return ErrEmailAlreadyUsed
 	}
@@ -30,19 +34,20 @@ func (r *UserRepository) Create(user *models.User) error {
 }
 
 func (r *UserRepository) GetByEmail(email string) (*models.User, error) {
-	query := `
-	SELECT id, name, email, password_hash, created_at
-	FROM users
-	WHERE email = $1`
-
 	var user models.User
-	err := r.DB.QueryRow(query, email).Scan(
+
+	err := r.DB.QueryRow(`
+		SELECT id, name, email, password_hash, created_at
+		FROM users
+		WHERE email = $1
+	`, email).Scan(
 		&user.ID,
 		&user.Name,
 		&user.Email,
 		&user.PasswordHash,
 		&user.CreatedAt,
 	)
+
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrUserNotFound
 	}
@@ -54,19 +59,20 @@ func (r *UserRepository) GetByEmail(email string) (*models.User, error) {
 }
 
 func (r *UserRepository) GetByID(id int) (*models.User, error) {
-	query := `
-	SELECT id, name, email, password_hash, created_at
-	FROM users
-	WHERE id = $1`
-
 	var user models.User
-	err := r.DB.QueryRow(query, id).Scan(
+
+	err := r.DB.QueryRow(`
+		SELECT id, name, email, password_hash, created_at
+		FROM users
+		WHERE id = $1
+	`, id).Scan(
 		&user.ID,
 		&user.Name,
 		&user.Email,
 		&user.PasswordHash,
 		&user.CreatedAt,
 	)
+
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrUserNotFound
 	}

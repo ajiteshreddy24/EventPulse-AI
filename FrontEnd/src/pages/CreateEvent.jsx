@@ -4,6 +4,7 @@ import { createEvent } from '../api'
 
 export default function CreateEvent() {
   const navigate = useNavigate()
+  const [error, setError] = useState("")
 
   const [form, setForm] = useState({
     title: '',
@@ -18,18 +19,23 @@ export default function CreateEvent() {
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    const payload = {
-      ...form,
-      event_date: new Date(form.event_date).toISOString(),
-    }
+    try {
+      const payload = {
+        ...form,
+        event_date: new Date(form.event_date).toISOString(),
+      }
 
-    await createEvent(payload)
-    navigate('/events')
+      await createEvent(payload)
+      navigate('/events')
+    } catch (err) {
+      setError(err.message || "Unable to create event.")
+    }
   }
 
   return (
     <div className="container">
       <h2>Create Event</h2>
+      {error && <p style={{ color: "crimson" }}>{error}</p>}
 
       <form onSubmit={handleSubmit}>
         <input

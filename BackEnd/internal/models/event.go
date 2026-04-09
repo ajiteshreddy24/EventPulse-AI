@@ -9,4 +9,7 @@ type Event struct {
 	Location    string    `json:"location"`
 	EventDate   time.Time `json:"event_date"`
 	CreatedAt   time.Time `json:"created_at"`
+
+	RSVPCount   int  `json:"rsvpCount"`
+	UserHasRSVP bool `json:"userHasRSVP"`
 }
