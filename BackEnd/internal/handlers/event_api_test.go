@@ -210,7 +210,7 @@ func TestCreateEventDatabaseError(t *testing.T) {
 func TestGetEventsSuccess(t *testing.T) {
 	state := &fakeDBState{responses: map[string]fakeResponse{}}
 	now := time.Now()
-	state.set("SELECT id, title, description, location, event_date, created_at FROM events", fakeResponse{
+	state.set("FROM events", fakeResponse{
 		columns: []string{"id", "title", "description", "location", "event_date", "created_at"},
 		rows: [][]driver.Value{
 			{int64(1), "Demo", "Launch", "NYC", now, now},
@@ -240,7 +240,7 @@ func TestGetEventsSuccess(t *testing.T) {
 
 func TestGetEventsDatabaseError(t *testing.T) {
 	state := &fakeDBState{responses: map[string]fakeResponse{}}
-	state.set("SELECT id, title, description, location, event_date, created_at FROM events", fakeResponse{
+	state.set("FROM events", fakeResponse{
 		err: errors.New("select failed"),
 	})
 
