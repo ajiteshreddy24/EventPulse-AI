@@ -1,6 +1,6 @@
 export async function getEvents() {
     const res = await fetch('/api/events')
-    if (!res.ok) throw new Error('Failed to fetch events')
+    if (!res.ok) throw new Error('Failed to fetch latest events')
     return res.json()
   }
   

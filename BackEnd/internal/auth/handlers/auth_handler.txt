@@ -1,0 +1,32 @@
+Code Review Comments (AuthHandler):
+
+1.  The handler structure is clean and follows separation of concerns
+    well by delegating logic to the service layer.
+
+2.  JSON decoding is handled properly, but you may want to add
+    validation on required fields before passing to the service.
+
+3.  Error handling using errors.Is is good practice and makes the code
+    readable and maintainable.
+
+4.  HTTP status codes are used appropriately (201, 400, 401, 404, 409,
+    500), which is great.
+
+5.  Responses are directly encoded using json.NewEncoder, but consider
+    setting response headers: w.Header().Set(“Content-Type”,
+    “application/json”)
+
+6.  No request body closing (defer r.Body.Close()) — good to add for
+    safety.
+
+7.  Logging is missing — for production systems, logging errors before
+    returning responses is useful.
+
+8.  The Me handler correctly uses context for authentication, which is a
+    good design choice.
+
+9.  Consider standardizing API responses (e.g., wrapping responses in a
+    consistent structure with message/data).
+
+10. Overall, the code is clean, modular, and follows good backend design
+    practices.
