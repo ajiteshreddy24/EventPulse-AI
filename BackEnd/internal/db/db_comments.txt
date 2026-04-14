@@ -1,0 +1,27 @@
+Code Review Comments:
+
+1.  The Connect() function handles database connection and migration
+    well, but it tightly couples connection logic with migration.
+    Consider separating concerns.
+
+2.  Credentials are hardcoded in the connection string. This is not
+    secure. Use environment variables instead.
+
+3.  Global variable ‘DB’ is convenient but can lead to issues in testing
+    and concurrency. Consider dependency injection.
+
+4.  Error handling is good using log.Fatal, but this will terminate the
+    application immediately. In larger systems, returning errors might
+    be preferable.
+
+5.  The migrate() function is simple and effective, but for production
+    systems, consider using a proper migration tool.
+
+6.  Table schemas look clean. However, indexes (e.g., on email) could be
+    explicitly defined for performance.
+
+7.  Password storage uses ‘password_hash’, which is good practice, but
+    ensure hashing (like bcrypt) is implemented elsewhere.
+
+8.  Naming conventions are clear and readable, which is good for
+    maintainability.
