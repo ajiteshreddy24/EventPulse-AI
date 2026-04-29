@@ -10,6 +10,7 @@ import EditEvent from "./pages/EditEvent"
 import Login from "./pages/Login"
 import Signup from "./pages/Signup"
 import CalendarView from "./pages/CalendarView"
+import Profile from "./pages/Profile"
 
 export default function App() {
   return (
@@ -22,6 +23,10 @@ export default function App() {
           <Route path="/calendar" element={<CalendarView />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route
+            path="/profile"
+            element={<ProtectedRoute><Profile /></ProtectedRoute>}
+          />
 
           <Route
             path="/create"

@@ -11,6 +11,7 @@ export default function CreateEvent() {
     description: '',
     location: '',
     event_date: '',
+    capacity: 50,
   })
 
   const handleChange = (e) =>
@@ -66,6 +67,17 @@ export default function CreateEvent() {
           data-cy="date-input"
           type="datetime-local"
           name="event_date"
+          onChange={handleChange}
+          required
+        />
+
+        <input
+          data-cy="capacity-input"
+          type="number"
+          min="1"
+          name="capacity"
+          placeholder="Capacity"
+          value={form.capacity}
           onChange={handleChange}
           required
         />

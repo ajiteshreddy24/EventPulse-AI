@@ -16,6 +16,7 @@ export default function Navbar() {
         <Link to="/events">Events</Link>
         <Link to="/calendar">Calendar</Link>
         <Link to="/create">Create Event</Link>
+        {user && <Link to="/profile">Profile</Link>}
       </div>
 
       <div className="nav-actions">

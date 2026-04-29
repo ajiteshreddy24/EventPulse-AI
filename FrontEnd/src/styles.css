@@ -446,6 +446,72 @@ a {
   color: var(--muted);
 }
 
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.event-toolbar {
+  margin-bottom: 24px;
+}
+
+.search-input {
+  width: 100%;
+}
+
+.recommendation-panel {
+  margin-bottom: 28px;
+  padding: 22px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(13, 43, 97, 0.08);
+}
+
+.recommendation-panel h3 {
+  margin: 0;
+}
+
+.recommendation-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.recommendation-card {
+  padding: 18px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(250, 93, 26, 0.1), rgba(0, 83, 166, 0.08));
+  border: 1px solid rgba(13, 43, 97, 0.08);
+}
+
+.recommendation-card h4 {
+  margin: 10px 0 8px;
+}
+
+.recommendation-card span {
+  display: block;
+  margin-top: 10px;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.recommendation-tag {
+  margin: 0;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--secondary);
+}
+
+.recommendation-empty {
+  margin-top: 16px;
+  color: var(--muted);
+}
+
 /* ===== FORMS ===== */
 
 form {
@@ -560,6 +626,93 @@ button:hover {
 
 .card button {
   flex: 1;
+}
+
+.event-actions {
+  margin-top: 15px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.comment-section {
+  margin-top: 18px;
+  border-top: 1px solid rgba(13, 43, 97, 0.08);
+  padding-top: 16px;
+}
+
+.comment-toggle,
+.comment-delete {
+  background: rgba(0, 83, 166, 0.08);
+  color: var(--secondary);
+  box-shadow: none;
+}
+
+.comment-thread {
+  margin-top: 16px;
+}
+
+.comment-item {
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(13, 43, 97, 0.08);
+}
+
+.comment-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+  font-size: 0.88rem;
+}
+
+.comment-compose {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.interest-picker {
+  display: grid;
+  gap: 14px;
+}
+
+.interest-picker p {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.interest-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.interest-pill {
+  border: 1px solid rgba(0, 83, 166, 0.16);
+  background: rgba(255, 255, 255, 0.74);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 10px 16px;
+  font: inherit;
+  font-weight: 700;
+  text-transform: capitalize;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.interest-pill.active {
+  background: linear-gradient(135deg, var(--secondary), var(--bg-deep));
+  color: #fff;
+  box-shadow: 0 12px 28px rgba(0, 33, 165, 0.18);
+}
+
+.profile-card {
+  max-width: 760px;
+  margin: 48px auto;
+  display: grid;
+  gap: 18px;
 }
 
 /* ===== ANIMATION ===== */

@@ -62,6 +62,7 @@ export default function EditEvent() {
         <textarea name="description" value={form.description} onChange={handleChange} required />
         <input name="location" value={form.location} onChange={handleChange} required />
         <input type="datetime-local" name="event_date" value={form.event_date} onChange={handleChange} required />
+        <input type="number" min="1" name="capacity" value={form.capacity} onChange={handleChange} required />
         <button data-cy="update-btn">Update Event</button>
       </form>
     </div>

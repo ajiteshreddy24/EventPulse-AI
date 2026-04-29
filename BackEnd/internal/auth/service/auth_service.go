@@ -37,6 +37,7 @@ func (s *AuthService) Register(req authModels.RegisterRequest) (*authModels.Auth
 	user := &authModels.User{
 		Name:         req.Name,
 		Email:        req.Email,
+		Interests:    normalizeInterests(req.Interests),
 		PasswordHash: string(passwordHash),
 	}
 
@@ -89,6 +90,21 @@ func (s *AuthService) GetUserByID(id int) (*authModels.User, error) {
 	return &sanitized, nil
 }
 
+func (s *AuthService) UpdateInterests(userID int, interests []string) (*authModels.User, error) {
+	normalized := normalizeInterests(interests)
+	if err := s.Repo.UpdateInterests(userID, normalized); err != nil {
+		return nil, err
+	}
+
+	user, err := s.Repo.GetByID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	sanitized := sanitizeUser(*user)
+	return &sanitized, nil
+}
+
 func (s *AuthService) ParseToken(tokenString string) (jwt.MapClaims, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		return []byte(jwtSecret()), nil
@@ -127,4 +143,23 @@ func jwtSecret() string {
 func sanitizeUser(user authModels.User) authModels.User {
 	user.PasswordHash = ""
 	return user
+}
+
+func normalizeInterests(interests []string) []string {
+	seen := map[string]struct{}{}
+	normalized := make([]string, 0, len(interests))
+
+	for _, interest := range interests {
+		value := strings.TrimSpace(strings.ToLower(interest))
+		if value == "" {
+			continue
+		}
+		if _, exists := seen[value]; exists {
+			continue
+		}
+		seen[value] = struct{}{}
+		normalized = append(normalized, value)
+	}
+
+	return normalized
 }

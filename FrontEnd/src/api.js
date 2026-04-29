@@ -71,6 +71,47 @@ export async function cancelRSVP(id) {
   if (!res.ok) throw new Error(await res.text() || "Cancel RSVP failed")
 }
 
+export async function joinWaitlist(id) {
+  const res = await fetch(`/api/events/${id}/waitlist`, {
+    method: "POST",
+    headers: authHeaders(),
+  })
+  return parseJsonResponse(res, "Unable to join waitlist")
+}
+
+export async function getComments(eventId) {
+  const res = await fetch(`/api/events/${eventId}/comments`, {
+    headers: authHeaders(),
+  })
+  const data = await parseJsonResponse(res, "Failed to fetch comments")
+  return Array.isArray(data) ? data : []
+}
+
+export async function createComment(eventId, comment) {
+  const res = await fetch(`/api/events/${eventId}/comments`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ comment }),
+  })
+  return parseJsonResponse(res, "Unable to create comment")
+}
+
+export async function deleteComment(commentId) {
+  const res = await fetch(`/api/comments/${commentId}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  })
+  return parseJsonResponse(res, "Unable to delete comment")
+}
+
+export async function getRecommendations() {
+  const res = await fetch("/api/events/recommendations", {
+    headers: authHeaders(),
+  })
+  const data = await parseJsonResponse(res, "Failed to fetch recommendations")
+  return Array.isArray(data) ? data : []
+}
+
 /* ================= AUTH ================= */
 
 export async function login(data) {
@@ -95,4 +136,13 @@ export async function getMe() {
   const res = await fetch("/api/auth/me", { headers: authHeaders() })
   if (!res.ok) return null
   return parseJsonResponse(res, "Failed to fetch current user")
+}
+
+export async function updateInterests(interests) {
+  const res = await fetch("/api/auth/me/interests", {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify({ interests }),
+  })
+  return parseJsonResponse(res, "Failed to update interests")
 }

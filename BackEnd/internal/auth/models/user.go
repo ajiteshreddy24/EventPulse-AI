@@ -6,14 +6,16 @@ type User struct {
 	ID           int       `json:"id"`
 	Name         string    `json:"name"`
 	Email        string    `json:"email"`
+	Interests    []string  `json:"interests"`
 	PasswordHash string    `json:"-"`
 	CreatedAt    time.Time `json:"created_at"`
 }
 
 type RegisterRequest struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Name      string   `json:"name"`
+	Email     string   `json:"email"`
+	Password  string   `json:"password"`
+	Interests []string `json:"interests"`
 }
 
 type LoginRequest struct {
@@ -24,4 +26,8 @@ type LoginRequest struct {
 type AuthResponse struct {
 	Token string `json:"token"`
 	User  User   `json:"user"`
+}
+
+type UpdateInterestsRequest struct {
+	Interests []string `json:"interests"`
 }
