@@ -14,8 +14,8 @@ import (
 )
 
 var ErrInvalidCredentials = errors.New("invalid email or password")
-var ErrInvalidAuthPayload = errors.New("name, email, and password are required")
-var ErrInvalidLoginPayload = errors.New("email and password are required")
+var ErrInvalidAuthPayload = errors.New("name, email, and password are needed")
+var ErrInvalidLoginPayload = errors.New("email and password are needed")
 
 type AuthService struct {
 	Repo *authQueries.UserRepository

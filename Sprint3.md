@@ -9,6 +9,14 @@ The application is split into:
 - Frontend: React, Vite, React Router, FullCalendar, Cypress.
 - Backend: Go, Gorilla Mux, PostgreSQL, JWT authentication, repository/service/handler layers.
 
+# Sprint 3 Demo Videos
+
+🎬 **Frontend Demo:**  
+[https://youtu.be/kHt29qN58cE](https://www.youtube.com/watch?v=z2KrQTPA_ZM)  
+
+🎬 **Backend Demo (Updated):**  
+[https://youtu.be/Slh6_E3W0nI](https://www.youtube.com/watch?v=aBJRcEeNJoI)  
+
 ## Frontend Sprint 3
 
 ## Features Implemented
@@ -362,4 +370,3 @@ To summarize, Sprint 3 completed the main authenticated event workflow for Gator
 - Confirm calendar view loads events.
 - Show frontend lint/build success.
 - Show backend test success.
-

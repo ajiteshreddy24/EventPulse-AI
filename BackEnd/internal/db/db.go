@@ -16,15 +16,15 @@ func Connect() {
 	var err error
 	DB, err = sql.Open("postgres", connStr)
 	if err != nil {
-		log.Fatal("Error opening DB:", err)
+		log.Fatal("Error opening Database:", err)
 	}
 
 	err = DB.Ping()
 	if err != nil {
-		log.Fatal("Error connecting to DB:", err)
+		log.Fatal("Error connecting to Database:", err)
 	}
 
-	fmt.Println("Connected to PostgreSQL 🚀")
+	fmt.Println("Connected to PostgreSQL ")
 
 	if err := migrate(); err != nil {
 		log.Fatal("Error migrating DB:", err)
