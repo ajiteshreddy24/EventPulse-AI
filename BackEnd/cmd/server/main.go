@@ -52,6 +52,9 @@ func main() {
 	api.Handle("/events/recommendations",
 		authMW.RequireAuth(http.HandlerFunc(handler.GetRecommendations)),
 	).Methods("GET")
+	api.Handle("/events/attending",
+		authMW.RequireAuth(http.HandlerFunc(handler.GetMyRSVPedEvents)),
+	).Methods("GET")
 	api.HandleFunc("/events/{id}", handler.GetEventByID).Methods("GET")
 
 	api.Handle("/events",

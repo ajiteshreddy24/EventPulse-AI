@@ -10,14 +10,18 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 
+	authMiddleware "github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/auth/middleware"
+	authService "github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/auth/service"
 	"github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/models"
 	"github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/queries"
 	"github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/service"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/mux"
 )
 
@@ -346,4 +350,80 @@ func TestDeleteEventSuccess(t *testing.T) {
 	if rec.Code != http.StatusNoContent {
 		t.Fatalf("expected 204, got %d", rec.Code)
 	}
+}
+
+func TestGetMyRSVPedEventsSuccess(t *testing.T) {
+	state := &fakeDBState{responses: map[string]fakeResponse{}}
+	now := time.Now()
+	state.set("JOIN rsvps rsvp", fakeResponse{
+		columns: []string{"id", "title", "description", "location", "event_date", "capacity", "created_at", "rsvp_count"},
+		rows: [][]driver.Value{
+			{int64(4), "AI Meetup", "Campus networking", "Innovation Hub", now, int64(80), now, int64(22)},
+			{int64(9), "Career Fair", "Internship recruiting", "Student Center", now.Add(2 * time.Hour), int64(150), now, int64(89)},
+		},
+	})
+
+	handler := newTestHandlerWithUniqueDriver(t, state)
+	authMW := &authMiddleware.AuthMiddleware{Service: &authService.AuthService{}}
+	router := mux.NewRouter()
+	router.Handle("/events/attending",
+		authMW.RequireAuth(http.HandlerFunc(handler.GetMyRSVPedEvents)),
+	).Methods(http.MethodGet)
+
+	req := httptest.NewRequest(http.MethodGet, "/events/attending", nil)
+	req.Header.Set("Authorization", "Bearer "+testBearerToken(t, 42))
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+
+	var events []models.Event
+	if err := json.NewDecoder(rec.Body).Decode(&events); err != nil {
+		t.Fatalf("failed to decode attending events: %v", err)
+	}
+
+	if len(events) != 2 {
+		t.Fatalf("expected 2 attending events, got %d", len(events))
+	}
+
+	if events[0].ID != 4 || events[1].ID != 9 {
+		t.Fatalf("unexpected attending events returned: %+v", events)
+	}
+}
+
+func TestGetMyRSVPedEventsUnauthorized(t *testing.T) {
+	handler := &EventHandler{}
+	authMW := &authMiddleware.AuthMiddleware{Service: &authService.AuthService{}}
+	router := mux.NewRouter()
+	router.Handle("/events/attending",
+		authMW.RequireAuth(http.HandlerFunc(handler.GetMyRSVPedEvents)),
+	).Methods(http.MethodGet)
+
+	req := httptest.NewRequest(http.MethodGet, "/events/attending", nil)
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d", rec.Code)
+	}
+}
+
+func testBearerToken(t *testing.T, userID int) string {
+	t.Helper()
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"sub": strconv.Itoa(userID),
+		"exp": time.Now().Add(time.Hour).Unix(),
+	})
+
+	signedToken, err := token.SignedString([]byte("eventpulse-dev-secret"))
+	if err != nil {
+		t.Fatalf("failed to sign test token: %v", err)
+	}
+
+	return signedToken
 }

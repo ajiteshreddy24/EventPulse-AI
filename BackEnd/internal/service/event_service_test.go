@@ -101,3 +101,38 @@ func TestGetEvents(t *testing.T) {
 		t.Errorf("expected 1 event, got %d", len(events))
 	}
 }
+
+func TestGetRSVPedEvents(t *testing.T) {
+	svc := setupService(t)
+
+	event := &models.Event{
+		Title:       "AI Mixer",
+		Description: "Meet builders on campus",
+		Location:    "Innovation Lab",
+		EventDate:   time.Now().Add(24 * time.Hour),
+	}
+
+	if err := svc.CreateEvent(event); err != nil {
+		t.Fatalf("create failed: %v", err)
+	}
+
+	if _, err := svc.Repo.DB.Exec(`
+		INSERT INTO rsvps (user_id, event_id)
+		VALUES ($1, $2)
+	`, 7, event.ID); err != nil {
+		t.Fatalf("failed to insert rsvp: %v", err)
+	}
+
+	events, err := svc.GetRSVPedEvents(7)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(events) != 1 {
+		t.Fatalf("expected 1 attending event, got %d", len(events))
+	}
+
+	if events[0].ID != event.ID {
+		t.Fatalf("expected event ID %d, got %d", event.ID, events[0].ID)
+	}
+}

@@ -112,6 +112,14 @@ export async function getRecommendations() {
   return Array.isArray(data) ? data : []
 }
 
+export async function getAttendingEvents() {
+  const res = await fetch("/api/events/attending", {
+    headers: authHeaders(),
+  })
+  const data = await parseJsonResponse(res, "Failed to fetch attending events")
+  return Array.isArray(data) ? data : []
+}
+
 /* ================= AUTH ================= */
 
 export async function login(data) {
