@@ -325,6 +325,22 @@ func (h *EventHandler) GetRecommendations(w http.ResponseWriter, r *http.Request
 	json.NewEncoder(w).Encode(events)
 }
 
+func (h *EventHandler) GetMyRSVPedEvents(w http.ResponseWriter, r *http.Request) {
+	userID, ok := authMiddleware.UserIDFromContext(r.Context())
+	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	events, err := h.Service.GetRSVPedEvents(userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(events)
+}
+
 func (h *EventHandler) optionalUserID(r *http.Request) *int {
 	if h.AuthService == nil {
 		return nil

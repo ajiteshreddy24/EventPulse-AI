@@ -192,6 +192,10 @@ func (s *EventService) GetRecommendations(userID int) ([]models.Event, error) {
 	return candidates, nil
 }
 
+func (s *EventService) GetRSVPedEvents(userID int) ([]models.Event, error) {
+	return s.Repo.GetRSVPedEventsByUser(userID)
+}
+
 func recommendationTokens(event models.Event) []string {
 	fields := []string{event.Title, event.Description, event.Location}
 	var tokens []string
