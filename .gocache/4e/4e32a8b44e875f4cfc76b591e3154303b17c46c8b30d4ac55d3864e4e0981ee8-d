@@ -1,0 +1,110 @@
+//line /Users/sharanthummala/Desktop/SE_Project/EventPulse-AI/BackEnd/internal/auth/handlers/auth_handler.go:1:1
+package handlers
+
+import (
+	"encoding/json"
+	"errors"
+	"net/http"
+
+	authMiddleware "github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/auth/middleware"
+	authModels "github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/auth/models"
+	authQueries "github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/auth/queries"
+	authService "github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/auth/service"
+)
+
+type AuthHandler struct {
+	Service *authService.AuthService
+}
+
+func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {goCover_76375ffcef00__0[0] = 9 ; goCover_76375ffcef00__0[1] = goCover_76375ffcef00_P ; goCover_76375ffcef00__0[2] = 0 ; goCover_76375ffcef00__0[3] = 1;
+	var req authModels.RegisterRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {goCover_76375ffcef00__0[6] = 1;
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	goCover_76375ffcef00__0[4] = 1;response, err := h.Service.Register(req)
+	if err != nil {goCover_76375ffcef00__0[7] = 1;
+		switch {
+		case errors.Is(err, authService.ErrInvalidAuthPayload):goCover_76375ffcef00__0[9] = 1;
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		case errors.Is(err, authQueries.ErrEmailAlreadyUsed):goCover_76375ffcef00__0[10] = 1;
+			http.Error(w, err.Error(), http.StatusConflict)
+		default:goCover_76375ffcef00__0[11] = 1;
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		goCover_76375ffcef00__0[8] = 1;return
+	}
+
+	goCover_76375ffcef00__0[5] = 1;w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(response)
+}
+
+func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {goCover_76375ffcef00__1[0] = 9 ; goCover_76375ffcef00__1[1] = goCover_76375ffcef00_P ; goCover_76375ffcef00__1[2] = 1 ; goCover_76375ffcef00__1[3] = 1;
+	var req authModels.LoginRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {goCover_76375ffcef00__1[6] = 1;
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	goCover_76375ffcef00__1[4] = 1;response, err := h.Service.Login(req)
+	if err != nil {goCover_76375ffcef00__1[7] = 1;
+		switch {
+		case errors.Is(err, authService.ErrInvalidLoginPayload):goCover_76375ffcef00__1[9] = 1;
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		case errors.Is(err, authService.ErrInvalidCredentials):goCover_76375ffcef00__1[10] = 1;
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+		default:goCover_76375ffcef00__1[11] = 1;
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		goCover_76375ffcef00__1[8] = 1;return
+	}
+
+	goCover_76375ffcef00__1[5] = 1;json.NewEncoder(w).Encode(response)
+}
+
+func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {goCover_76375ffcef00__2[0] = 7 ; goCover_76375ffcef00__2[1] = goCover_76375ffcef00_P ; goCover_76375ffcef00__2[2] = 2 ; goCover_76375ffcef00__2[3] = 1;
+	userID, ok := authMiddleware.UserIDFromContext(r.Context())
+	if !ok {goCover_76375ffcef00__2[6] = 1;
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	goCover_76375ffcef00__2[4] = 1;user, err := h.Service.GetUserByID(userID)
+	if err != nil {goCover_76375ffcef00__2[7] = 1;
+		if errors.Is(err, authQueries.ErrUserNotFound) {goCover_76375ffcef00__2[9] = 1;
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+		goCover_76375ffcef00__2[8] = 1;http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	goCover_76375ffcef00__2[5] = 1;json.NewEncoder(w).Encode(user)
+}
+
+func (h *AuthHandler) UpdateInterests(w http.ResponseWriter, r *http.Request) {goCover_76375ffcef00__3[0] = 9 ; goCover_76375ffcef00__3[1] = goCover_76375ffcef00_P ; goCover_76375ffcef00__3[2] = 3 ; goCover_76375ffcef00__3[3] = 1;
+	userID, ok := authMiddleware.UserIDFromContext(r.Context())
+	if !ok {goCover_76375ffcef00__3[7] = 1;
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	goCover_76375ffcef00__3[4] = 1;var req authModels.UpdateInterestsRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {goCover_76375ffcef00__3[8] = 1;
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	goCover_76375ffcef00__3[5] = 1;user, err := h.Service.UpdateInterests(userID, req.Interests)
+	if err != nil {goCover_76375ffcef00__3[9] = 1;
+		if errors.Is(err, authQueries.ErrUserNotFound) {goCover_76375ffcef00__3[11] = 1;
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+		goCover_76375ffcef00__3[10] = 1;http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	goCover_76375ffcef00__3[6] = 1;json.NewEncoder(w).Encode(user)
+}

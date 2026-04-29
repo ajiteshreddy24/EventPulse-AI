@@ -1,0 +1,138 @@
+//line /Users/sharanthummala/Desktop/SE_Project/EventPulse-AI/BackEnd/internal/auth/queries/user_repository.go:1:1
+package queries
+
+import (
+	"database/sql"
+	"errors"
+	"strings"
+
+	"github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/auth/models"
+)
+
+var ErrUserNotFound = errors.New("user not found")
+var ErrEmailAlreadyUsed = errors.New("email already exists")
+
+type UserRepository struct {
+	DB *sql.DB
+}
+
+func (r *UserRepository) Create(user *models.User) error {goCover_ae4f8f9f1f9e__0[0] = 3 ; goCover_ae4f8f9f1f9e__0[1] = goCover_ae4f8f9f1f9e_P ; goCover_ae4f8f9f1f9e__0[2] = 0 ; goCover_ae4f8f9f1f9e__0[3] = 1;
+	err := r.DB.QueryRow(`
+		INSERT INTO users (name, email, password_hash, interests)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id, created_at
+	`,
+		user.Name,
+		user.Email,
+		user.PasswordHash,
+		serializeInterests(user.Interests),
+	).Scan(&user.ID, &user.CreatedAt)
+
+	if err != nil && strings.Contains(strings.ToLower(err.Error()), "unique") {goCover_ae4f8f9f1f9e__0[5] = 1;
+		return ErrEmailAlreadyUsed
+	}
+
+	goCover_ae4f8f9f1f9e__0[4] = 1;return err
+}
+
+func (r *UserRepository) GetByEmail(email string) (*models.User, error) {goCover_ae4f8f9f1f9e__1[0] = 5 ; goCover_ae4f8f9f1f9e__1[1] = goCover_ae4f8f9f1f9e_P ; goCover_ae4f8f9f1f9e__1[2] = 1 ; goCover_ae4f8f9f1f9e__1[3] = 1;
+	var user models.User
+	var interests string
+
+	err := r.DB.QueryRow(`
+		SELECT id, name, email, password_hash, interests, created_at
+		FROM users
+		WHERE email = $1
+	`, email).Scan(
+		&user.ID,
+		&user.Name,
+		&user.Email,
+		&user.PasswordHash,
+		&interests,
+		&user.CreatedAt,
+	)
+
+	if errors.Is(err, sql.ErrNoRows) {goCover_ae4f8f9f1f9e__1[6] = 1;
+		return nil, ErrUserNotFound
+	}
+	goCover_ae4f8f9f1f9e__1[4] = 1;if err != nil {goCover_ae4f8f9f1f9e__1[7] = 1;
+		return nil, err
+	}
+
+	goCover_ae4f8f9f1f9e__1[5] = 1;user.Interests = parseInterests(interests)
+	return &user, nil
+}
+
+func (r *UserRepository) GetByID(id int) (*models.User, error) {goCover_ae4f8f9f1f9e__2[0] = 5 ; goCover_ae4f8f9f1f9e__2[1] = goCover_ae4f8f9f1f9e_P ; goCover_ae4f8f9f1f9e__2[2] = 2 ; goCover_ae4f8f9f1f9e__2[3] = 1;
+	var user models.User
+	var interests string
+
+	err := r.DB.QueryRow(`
+		SELECT id, name, email, password_hash, interests, created_at
+		FROM users
+		WHERE id = $1
+	`, id).Scan(
+		&user.ID,
+		&user.Name,
+		&user.Email,
+		&user.PasswordHash,
+		&interests,
+		&user.CreatedAt,
+	)
+
+	if errors.Is(err, sql.ErrNoRows) {goCover_ae4f8f9f1f9e__2[6] = 1;
+		return nil, ErrUserNotFound
+	}
+	goCover_ae4f8f9f1f9e__2[4] = 1;if err != nil {goCover_ae4f8f9f1f9e__2[7] = 1;
+		return nil, err
+	}
+
+	goCover_ae4f8f9f1f9e__2[5] = 1;user.Interests = parseInterests(interests)
+	return &user, nil
+}
+
+func (r *UserRepository) UpdateInterests(userID int, interests []string) error {goCover_ae4f8f9f1f9e__3[0] = 7 ; goCover_ae4f8f9f1f9e__3[1] = goCover_ae4f8f9f1f9e_P ; goCover_ae4f8f9f1f9e__3[2] = 3 ; goCover_ae4f8f9f1f9e__3[3] = 1;
+	result, err := r.DB.Exec(`
+		UPDATE users
+		SET interests = $1
+		WHERE id = $2
+	`, serializeInterests(interests), userID)
+	if err != nil {goCover_ae4f8f9f1f9e__3[7] = 1;
+		return err
+	}
+
+	goCover_ae4f8f9f1f9e__3[4] = 1;rowsAffected, err := result.RowsAffected()
+	if err != nil {goCover_ae4f8f9f1f9e__3[8] = 1;
+		return err
+	}
+	goCover_ae4f8f9f1f9e__3[5] = 1;if rowsAffected == 0 {goCover_ae4f8f9f1f9e__3[9] = 1;
+		return ErrUserNotFound
+	}
+
+	goCover_ae4f8f9f1f9e__3[6] = 1;return nil
+}
+
+func parseInterests(raw string) []string {goCover_ae4f8f9f1f9e__4[0] = 6 ; goCover_ae4f8f9f1f9e__4[1] = goCover_ae4f8f9f1f9e_P ; goCover_ae4f8f9f1f9e__4[2] = 4 ; goCover_ae4f8f9f1f9e__4[3] = 1;
+	if strings.TrimSpace(raw) == "" {goCover_ae4f8f9f1f9e__4[6] = 1;
+		return []string{}
+	}
+
+	goCover_ae4f8f9f1f9e__4[4] = 1;parts := strings.Split(raw, ",")
+	interests := make([]string, 0, len(parts))
+	for _, part := range parts {goCover_ae4f8f9f1f9e__4[7] = 1;
+		value := strings.TrimSpace(strings.ToLower(part))
+		if value != "" {goCover_ae4f8f9f1f9e__4[8] = 1;
+			interests = append(interests, value)
+		}
+	}
+
+	goCover_ae4f8f9f1f9e__4[5] = 1;return interests
+}
+
+func serializeInterests(interests []string) string {goCover_ae4f8f9f1f9e__5[0] = 3 ; goCover_ae4f8f9f1f9e__5[1] = goCover_ae4f8f9f1f9e_P ; goCover_ae4f8f9f1f9e__5[2] = 5 ; goCover_ae4f8f9f1f9e__5[3] = 1;
+	if len(interests) == 0 {goCover_ae4f8f9f1f9e__5[5] = 1;
+		return ""
+	}
+
+	goCover_ae4f8f9f1f9e__5[4] = 1;return strings.Join(interests, ",")
+}

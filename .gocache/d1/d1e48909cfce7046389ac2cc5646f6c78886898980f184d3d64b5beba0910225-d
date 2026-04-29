@@ -1,0 +1,372 @@
+//line /Users/sharanthummala/Desktop/SE_Project/EventPulse-AI/BackEnd/internal/handlers/event_handler.go:1:1
+package handlers
+
+import (
+	"encoding/json"
+	"errors"
+	"net/http"
+	"strconv"
+	"strings"
+
+	authMiddleware "github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/auth/middleware"
+	authService "github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/auth/service"
+	"github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/models"
+	"github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/queries"
+	"github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/service"
+	"github.com/gorilla/mux"
+)
+
+type EventHandler struct {
+	Service     *service.EventService
+	AuthService *authService.AuthService
+}
+
+/* =========================
+   CREATE EVENT
+========================= */
+
+func (h *EventHandler) CreateEvent(w http.ResponseWriter, r *http.Request) {goCover_6e406164139a__0[0] = 5 ; goCover_6e406164139a__0[1] = goCover_6e406164139a_P ; goCover_6e406164139a__0[2] = 0 ; goCover_6e406164139a__0[3] = 1;
+	var event models.Event
+
+	if err := json.NewDecoder(r.Body).Decode(&event); err != nil {goCover_6e406164139a__0[6] = 1;
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	goCover_6e406164139a__0[4] = 1;if err := h.Service.CreateEvent(&event); err != nil {goCover_6e406164139a__0[7] = 1;
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	goCover_6e406164139a__0[5] = 1;w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(event)
+}
+
+/* =========================
+   GET ALL EVENTS
+========================= */
+
+func (h *EventHandler) GetEvents(w http.ResponseWriter, r *http.Request) {goCover_6e406164139a__1[0] = 3 ; goCover_6e406164139a__1[1] = goCover_6e406164139a_P ; goCover_6e406164139a__1[2] = 1 ; goCover_6e406164139a__1[3] = 1;
+	userID := h.optionalUserID(r)
+	events, err := h.Service.GetEvents(userID)
+	if err != nil {goCover_6e406164139a__1[5] = 1;
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	goCover_6e406164139a__1[4] = 1;json.NewEncoder(w).Encode(events)
+}
+
+/* =========================
+   GET EVENT BY ID
+========================= */
+
+func (h *EventHandler) GetEventByID(w http.ResponseWriter, r *http.Request) {goCover_6e406164139a__2[0] = 7 ; goCover_6e406164139a__2[1] = goCover_6e406164139a_P ; goCover_6e406164139a__2[2] = 2 ; goCover_6e406164139a__2[3] = 1;
+	idStr := mux.Vars(r)["id"]
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {goCover_6e406164139a__2[6] = 1;
+		http.Error(w, "invalid event id", http.StatusBadRequest)
+		return
+	}
+
+	goCover_6e406164139a__2[4] = 1;userID := h.optionalUserID(r)
+	event, err := h.Service.GetEventByID(id, userID)
+	if err != nil {goCover_6e406164139a__2[7] = 1;
+		if errors.Is(err, queries.ErrEventNotFound) {goCover_6e406164139a__2[9] = 1;
+			http.Error(w, "event not found", http.StatusNotFound)
+			return
+		}
+		goCover_6e406164139a__2[8] = 1;http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	goCover_6e406164139a__2[5] = 1;json.NewEncoder(w).Encode(event)
+}
+
+/* =========================
+   UPDATE EVENT
+========================= */
+
+func (h *EventHandler) UpdateEvent(w http.ResponseWriter, r *http.Request) {goCover_6e406164139a__3[0] = 9 ; goCover_6e406164139a__3[1] = goCover_6e406164139a_P ; goCover_6e406164139a__3[2] = 3 ; goCover_6e406164139a__3[3] = 1;
+	idStr := mux.Vars(r)["id"]
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {goCover_6e406164139a__3[7] = 1;
+		http.Error(w, "invalid event id", http.StatusBadRequest)
+		return
+	}
+
+	goCover_6e406164139a__3[4] = 1;var event models.Event
+	if err := json.NewDecoder(r.Body).Decode(&event); err != nil {goCover_6e406164139a__3[8] = 1;
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	goCover_6e406164139a__3[5] = 1;event.ID = id
+
+	if err := h.Service.UpdateEvent(&event); err != nil {goCover_6e406164139a__3[9] = 1;
+		if errors.Is(err, queries.ErrEventNotFound) {goCover_6e406164139a__3[11] = 1;
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+		goCover_6e406164139a__3[10] = 1;http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	goCover_6e406164139a__3[6] = 1;json.NewEncoder(w).Encode(event)
+}
+
+/* =========================
+   DELETE EVENT
+========================= */
+
+func (h *EventHandler) DeleteEvent(w http.ResponseWriter, r *http.Request) {goCover_6e406164139a__4[0] = 7 ; goCover_6e406164139a__4[1] = goCover_6e406164139a_P ; goCover_6e406164139a__4[2] = 4 ; goCover_6e406164139a__4[3] = 1;
+	idStr := mux.Vars(r)["id"]
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {goCover_6e406164139a__4[6] = 1;
+		http.Error(w, "invalid event id", http.StatusBadRequest)
+		return
+	}
+
+	goCover_6e406164139a__4[4] = 1;if err := h.Service.DeleteEvent(id); err != nil {goCover_6e406164139a__4[7] = 1;
+		if errors.Is(err, queries.ErrEventNotFound) {goCover_6e406164139a__4[9] = 1;
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+		goCover_6e406164139a__4[8] = 1;http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	goCover_6e406164139a__4[5] = 1;w.WriteHeader(http.StatusNoContent)
+}
+
+/* =========================
+   RSVP
+========================= */
+
+func (h *EventHandler) RSVP(w http.ResponseWriter, r *http.Request) {goCover_6e406164139a__5[0] = 12 ; goCover_6e406164139a__5[1] = goCover_6e406164139a_P ; goCover_6e406164139a__5[2] = 5 ; goCover_6e406164139a__5[3] = 1;
+	userID, ok := authMiddleware.UserIDFromContext(r.Context())
+	if !ok {goCover_6e406164139a__5[7] = 1;
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	goCover_6e406164139a__5[4] = 1;idStr := mux.Vars(r)["id"]
+	eventID, err := strconv.Atoi(idStr)
+	if err != nil {goCover_6e406164139a__5[8] = 1;
+		http.Error(w, "invalid event id", http.StatusBadRequest)
+		return
+	}
+
+	goCover_6e406164139a__5[5] = 1;if err := h.Service.RSVP(userID, eventID); err != nil {goCover_6e406164139a__5[9] = 1;
+		switch {
+		case errors.Is(err, queries.ErrRSVPAlreadyExists):goCover_6e406164139a__5[11] = 1;
+			http.Error(w, err.Error(), http.StatusConflict)
+		case errors.Is(err, queries.ErrEventFull):goCover_6e406164139a__5[12] = 1;
+			http.Error(w, err.Error(), http.StatusConflict)
+		case errors.Is(err, queries.ErrEventNotFound):goCover_6e406164139a__5[13] = 1;
+			http.Error(w, "event not found", http.StatusNotFound)
+		default:goCover_6e406164139a__5[14] = 1;
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		goCover_6e406164139a__5[10] = 1;return
+	}
+
+	goCover_6e406164139a__5[6] = 1;w.WriteHeader(http.StatusCreated)
+}
+
+/* =========================
+   CANCEL RSVP
+========================= */
+
+func (h *EventHandler) CancelRSVP(w http.ResponseWriter, r *http.Request) {goCover_6e406164139a__6[0] = 9 ; goCover_6e406164139a__6[1] = goCover_6e406164139a_P ; goCover_6e406164139a__6[2] = 6 ; goCover_6e406164139a__6[3] = 1;
+	userID, ok := authMiddleware.UserIDFromContext(r.Context())
+	if !ok {goCover_6e406164139a__6[7] = 1;
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	goCover_6e406164139a__6[4] = 1;idStr := mux.Vars(r)["id"]
+	eventID, err := strconv.Atoi(idStr)
+	if err != nil {goCover_6e406164139a__6[8] = 1;
+		http.Error(w, "invalid event id", http.StatusBadRequest)
+		return
+	}
+
+	goCover_6e406164139a__6[5] = 1;if err := h.Service.CancelRSVP(userID, eventID); err != nil {goCover_6e406164139a__6[9] = 1;
+		if errors.Is(err, queries.ErrEventNotFound) {goCover_6e406164139a__6[11] = 1;
+			http.Error(w, "rsvp not found", http.StatusNotFound)
+			return
+		}
+		goCover_6e406164139a__6[10] = 1;http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	goCover_6e406164139a__6[6] = 1;w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *EventHandler) JoinWaitlist(w http.ResponseWriter, r *http.Request) {goCover_6e406164139a__7[0] = 11 ; goCover_6e406164139a__7[1] = goCover_6e406164139a_P ; goCover_6e406164139a__7[2] = 7 ; goCover_6e406164139a__7[3] = 1;
+	userID, ok := authMiddleware.UserIDFromContext(r.Context())
+	if !ok {goCover_6e406164139a__7[7] = 1;
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	goCover_6e406164139a__7[4] = 1;idStr := mux.Vars(r)["id"]
+	eventID, err := strconv.Atoi(idStr)
+	if err != nil {goCover_6e406164139a__7[8] = 1;
+		http.Error(w, "invalid event id", http.StatusBadRequest)
+		return
+	}
+
+	goCover_6e406164139a__7[5] = 1;if err := h.Service.JoinWaitlist(userID, eventID); err != nil {goCover_6e406164139a__7[9] = 1;
+		switch {
+		case errors.Is(err, queries.ErrAlreadyOnWaitlist), errors.Is(err, queries.ErrEventFull), errors.Is(err, queries.ErrRSVPAlreadyExists):goCover_6e406164139a__7[11] = 1;
+			http.Error(w, err.Error(), http.StatusConflict)
+		case errors.Is(err, queries.ErrEventNotFound):goCover_6e406164139a__7[12] = 1;
+			http.Error(w, "event not found", http.StatusNotFound)
+		default:goCover_6e406164139a__7[13] = 1;
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		goCover_6e406164139a__7[10] = 1;return
+	}
+
+	goCover_6e406164139a__7[6] = 1;json.NewEncoder(w).Encode(map[string]string{"message": "Added to waitlist"})
+}
+
+func (h *EventHandler) CreateComment(w http.ResponseWriter, r *http.Request) {goCover_6e406164139a__8[0] = 12 ; goCover_6e406164139a__8[1] = goCover_6e406164139a_P ; goCover_6e406164139a__8[2] = 8 ; goCover_6e406164139a__8[3] = 1;
+	userID, ok := authMiddleware.UserIDFromContext(r.Context())
+	if !ok {goCover_6e406164139a__8[8] = 1;
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	goCover_6e406164139a__8[4] = 1;idStr := mux.Vars(r)["id"]
+	eventID, err := strconv.Atoi(idStr)
+	if err != nil {goCover_6e406164139a__8[9] = 1;
+		http.Error(w, "invalid event id", http.StatusBadRequest)
+		return
+	}
+
+	goCover_6e406164139a__8[5] = 1;var payload struct {
+		Comment string `json:"comment"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {goCover_6e406164139a__8[10] = 1;
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	goCover_6e406164139a__8[6] = 1;comment, err := h.Service.CreateComment(userID, eventID, payload.Comment)
+	if err != nil {goCover_6e406164139a__8[11] = 1;
+		switch {
+		case errors.Is(err, queries.ErrEventNotFound):goCover_6e406164139a__8[13] = 1;
+			http.Error(w, "event not found", http.StatusNotFound)
+		default:goCover_6e406164139a__8[14] = 1;
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+		goCover_6e406164139a__8[12] = 1;return
+	}
+
+	goCover_6e406164139a__8[7] = 1;w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(comment)
+}
+
+func (h *EventHandler) GetComments(w http.ResponseWriter, r *http.Request) {goCover_6e406164139a__9[0] = 5 ; goCover_6e406164139a__9[1] = goCover_6e406164139a_P ; goCover_6e406164139a__9[2] = 9 ; goCover_6e406164139a__9[3] = 1;
+	idStr := mux.Vars(r)["id"]
+	eventID, err := strconv.Atoi(idStr)
+	if err != nil {goCover_6e406164139a__9[6] = 1;
+		http.Error(w, "invalid event id", http.StatusBadRequest)
+		return
+	}
+
+	goCover_6e406164139a__9[4] = 1;comments, err := h.Service.GetComments(eventID)
+	if err != nil {goCover_6e406164139a__9[7] = 1;
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	goCover_6e406164139a__9[5] = 1;json.NewEncoder(w).Encode(comments)
+}
+
+func (h *EventHandler) DeleteComment(w http.ResponseWriter, r *http.Request) {goCover_6e406164139a__10[0] = 7 ; goCover_6e406164139a__10[1] = goCover_6e406164139a_P ; goCover_6e406164139a__10[2] = 10 ; goCover_6e406164139a__10[3] = 1;
+	idStr := mux.Vars(r)["id"]
+	commentID, err := strconv.Atoi(idStr)
+	if err != nil {goCover_6e406164139a__10[6] = 1;
+		http.Error(w, "invalid comment id", http.StatusBadRequest)
+		return
+	}
+
+	goCover_6e406164139a__10[4] = 1;if err := h.Service.DeleteComment(commentID); err != nil {goCover_6e406164139a__10[7] = 1;
+		if errors.Is(err, queries.ErrEventNotFound) {goCover_6e406164139a__10[9] = 1;
+			http.Error(w, "comment not found", http.StatusNotFound)
+			return
+		}
+		goCover_6e406164139a__10[8] = 1;http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	goCover_6e406164139a__10[5] = 1;json.NewEncoder(w).Encode(map[string]string{"message": "Comment deleted"})
+}
+
+func (h *EventHandler) GetRecommendations(w http.ResponseWriter, r *http.Request) {goCover_6e406164139a__11[0] = 5 ; goCover_6e406164139a__11[1] = goCover_6e406164139a_P ; goCover_6e406164139a__11[2] = 11 ; goCover_6e406164139a__11[3] = 1;
+	userID, ok := authMiddleware.UserIDFromContext(r.Context())
+	if !ok {goCover_6e406164139a__11[6] = 1;
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	goCover_6e406164139a__11[4] = 1;events, err := h.Service.GetRecommendations(userID)
+	if err != nil {goCover_6e406164139a__11[7] = 1;
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	goCover_6e406164139a__11[5] = 1;json.NewEncoder(w).Encode(events)
+}
+
+func (h *EventHandler) GetMyRSVPedEvents(w http.ResponseWriter, r *http.Request) {goCover_6e406164139a__12[0] = 5 ; goCover_6e406164139a__12[1] = goCover_6e406164139a_P ; goCover_6e406164139a__12[2] = 12 ; goCover_6e406164139a__12[3] = 1;
+	userID, ok := authMiddleware.UserIDFromContext(r.Context())
+	if !ok {goCover_6e406164139a__12[6] = 1;
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	goCover_6e406164139a__12[4] = 1;events, err := h.Service.GetRSVPedEvents(userID)
+	if err != nil {goCover_6e406164139a__12[7] = 1;
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	goCover_6e406164139a__12[5] = 1;json.NewEncoder(w).Encode(events)
+}
+
+func (h *EventHandler) optionalUserID(r *http.Request) *int {goCover_6e406164139a__13[0] = 11 ; goCover_6e406164139a__13[1] = goCover_6e406164139a_P ; goCover_6e406164139a__13[2] = 13 ; goCover_6e406164139a__13[3] = 1;
+	if h.AuthService == nil {goCover_6e406164139a__13[9] = 1;
+		return nil
+	}
+
+	goCover_6e406164139a__13[4] = 1;authHeader := r.Header.Get("Authorization")
+	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {goCover_6e406164139a__13[10] = 1;
+		return nil
+	}
+
+	goCover_6e406164139a__13[5] = 1;tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+	claims, err := h.AuthService.ParseToken(tokenString)
+	if err != nil {goCover_6e406164139a__13[11] = 1;
+		return nil
+	}
+
+	goCover_6e406164139a__13[6] = 1;subject, ok := claims["sub"].(string)
+	if !ok {goCover_6e406164139a__13[12] = 1;
+		return nil
+	}
+
+	goCover_6e406164139a__13[7] = 1;userID, err := strconv.Atoi(subject)
+	if err != nil {goCover_6e406164139a__13[13] = 1;
+		return nil
+	}
+
+	goCover_6e406164139a__13[8] = 1;return &userID
+}

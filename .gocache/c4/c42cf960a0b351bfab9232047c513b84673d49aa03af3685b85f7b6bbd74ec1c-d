@@ -1,0 +1,104 @@
+//line /Users/sharanthummala/Desktop/SE_Project/EventPulse-AI/BackEnd/cmd/server/main.go:1:1
+package main; import _ "runtime/coverage"
+
+import (
+	"log"
+	"net/http"
+
+	"github.com/gorilla/mux"
+
+	authHandlers "github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/auth/handlers"
+	authMiddleware "github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/auth/middleware"
+	authQueries "github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/auth/queries"
+	authService "github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/auth/service"
+	"github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/db"
+	"github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/handlers"
+	"github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/queries"
+	"github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/service"
+)
+
+func main() {goCover_4e7799bd530a__0[0] = 6 ; goCover_4e7799bd530a__0[1] = goCover_4e7799bd530a_P ; goCover_4e7799bd530a__0[2] = 0 ; goCover_4e7799bd530a__0[3] = 1;
+	db.Connect()
+
+	repo := &queries.EventRepository{DB: db.DB}
+	authRepo := &authQueries.UserRepository{DB: db.DB}
+	service := &service.EventService{Repo: repo, UserRepo: authRepo}
+	authSvc := &authService.AuthService{Repo: authRepo}
+	handler := &handlers.EventHandler{Service: service, AuthService: authSvc}
+	authHandler := &authHandlers.AuthHandler{Service: authSvc}
+	authMW := &authMiddleware.AuthMiddleware{Service: authSvc}
+
+	r := mux.NewRouter()
+
+	// CORS
+	r.Use(mux.CORSMethodMiddleware(r))
+	r.Use(func(next http.Handler) http.Handler {goCover_4e7799bd530a__0[5] = 1;
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {goCover_4e7799bd530a__0[6] = 1;
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+
+			if r.Method == "OPTIONS" {goCover_4e7799bd530a__0[8] = 1;
+				return
+			}
+
+			goCover_4e7799bd530a__0[7] = 1;next.ServeHTTP(w, r)
+		})
+	})
+
+	goCover_4e7799bd530a__0[4] = 1;api := r.PathPrefix("/api").Subrouter()
+
+	// EVENTS (Protected where needed)
+	api.HandleFunc("/events", handler.GetEvents).Methods("GET")
+	api.Handle("/events/recommendations",
+		authMW.RequireAuth(http.HandlerFunc(handler.GetRecommendations)),
+	).Methods("GET")
+	api.Handle("/events/attending",
+		authMW.RequireAuth(http.HandlerFunc(handler.GetMyRSVPedEvents)),
+	).Methods("GET")
+	api.HandleFunc("/events/{id}", handler.GetEventByID).Methods("GET")
+
+	api.Handle("/events",
+		authMW.RequireAuth(http.HandlerFunc(handler.CreateEvent)),
+	).Methods("POST")
+
+	api.Handle("/events/{id}",
+		authMW.RequireAuth(http.HandlerFunc(handler.UpdateEvent)),
+	).Methods("PUT")
+
+	api.Handle("/events/{id}",
+		authMW.RequireAuth(http.HandlerFunc(handler.DeleteEvent)),
+	).Methods("DELETE")
+
+	api.Handle("/events/{id}/rsvp",
+		authMW.RequireAuth(http.HandlerFunc(handler.RSVP)),
+	).Methods("POST")
+
+	api.Handle("/events/{id}/rsvp",
+		authMW.RequireAuth(http.HandlerFunc(handler.CancelRSVP)),
+	).Methods("DELETE")
+
+	api.Handle("/events/{id}/waitlist",
+		authMW.RequireAuth(http.HandlerFunc(handler.JoinWaitlist)),
+	).Methods("POST")
+
+	api.Handle("/events/{id}/comments",
+		authMW.RequireAuth(http.HandlerFunc(handler.CreateComment)),
+	).Methods("POST")
+
+	api.HandleFunc("/events/{id}/comments", handler.GetComments).Methods("GET")
+	api.HandleFunc("/comments/{id}", handler.DeleteComment).Methods("DELETE")
+
+	// AUTH
+	api.HandleFunc("/auth/register", authHandler.Register).Methods("POST")
+	api.HandleFunc("/auth/login", authHandler.Login).Methods("POST")
+	api.Handle("/auth/me",
+		authMW.RequireAuth(http.HandlerFunc(authHandler.Me)),
+	).Methods("GET")
+	api.Handle("/auth/me/interests",
+		authMW.RequireAuth(http.HandlerFunc(authHandler.UpdateInterests)),
+	).Methods("PUT")
+
+	log.Println("Server running on :8080")
+	log.Fatal(http.ListenAndServe(":8080", r))
+}
