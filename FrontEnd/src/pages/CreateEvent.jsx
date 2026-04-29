@@ -4,12 +4,14 @@ import { createEvent } from '../api'
 
 export default function CreateEvent() {
   const navigate = useNavigate()
+  const [error, setError] = useState("")
 
   const [form, setForm] = useState({
     title: '',
     description: '',
     location: '',
     event_date: '',
+    capacity: 50,
   })
 
   const handleChange = (e) =>
@@ -18,18 +20,23 @@ export default function CreateEvent() {
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    const payload = {
-      ...form,
-      event_date: new Date(form.event_date).toISOString(),
-    }
+    try {
+      const payload = {
+        ...form,
+        event_date: new Date(form.event_date).toISOString(),
+      }
 
-    await createEvent(payload)
-    navigate('/events')
+      await createEvent(payload)
+      navigate('/events')
+    } catch (err) {
+      setError(err.message || "Unable to create event.")
+    }
   }
 
   return (
     <div className="container">
       <h2>Create Event</h2>
+      {error && <p style={{ color: "crimson" }}>{error}</p>}
 
       <form onSubmit={handleSubmit}>
         <input
@@ -60,6 +67,17 @@ export default function CreateEvent() {
           data-cy="date-input"
           type="datetime-local"
           name="event_date"
+          onChange={handleChange}
+          required
+        />
+
+        <input
+          data-cy="capacity-input"
+          type="number"
+          min="1"
+          name="capacity"
+          placeholder="Capacity"
+          value={form.capacity}
           onChange={handleChange}
           required
         />

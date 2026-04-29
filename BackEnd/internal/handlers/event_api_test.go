@@ -211,10 +211,10 @@ func TestGetEventsSuccess(t *testing.T) {
 	state := &fakeDBState{responses: map[string]fakeResponse{}}
 	now := time.Now()
 	state.set("FROM events", fakeResponse{
-		columns: []string{"id", "title", "description", "location", "event_date", "created_at"},
+		columns: []string{"id", "title", "description", "location", "event_date", "capacity", "created_at", "rsvp_count", "user_has_rsvp", "waitlist_count", "user_on_waitlist"},
 		rows: [][]driver.Value{
-			{int64(1), "Demo", "Launch", "NYC", now, now},
-			{int64(2), "Meetup", "Community", "Boston", now, now},
+			{int64(1), "Demo", "Launch", "NYC", now, int64(50), now, int64(3), false, int64(1), false},
+			{int64(2), "Meetup", "Community", "Boston", now, int64(100), now, int64(8), true, int64(0), false},
 		},
 	})
 
