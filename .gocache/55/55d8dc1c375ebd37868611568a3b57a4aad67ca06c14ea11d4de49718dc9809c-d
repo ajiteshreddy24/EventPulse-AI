@@ -1,0 +1,3 @@
+covervars.go
+auth_middleware.cover.go
+./auth_middleware_test.go

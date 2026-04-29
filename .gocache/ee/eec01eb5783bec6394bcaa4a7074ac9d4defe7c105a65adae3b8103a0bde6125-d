@@ -1,0 +1,166 @@
+//line /Users/sharanthummala/Desktop/SE_Project/EventPulse-AI/BackEnd/internal/auth/service/auth_service.go:1:1
+package service
+
+import (
+	"errors"
+	"os"
+	"strconv"
+	"strings"
+	"time"
+
+	authModels "github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/auth/models"
+	authQueries "github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/auth/queries"
+	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/bcrypt"
+)
+
+var ErrInvalidCredentials = errors.New("invalid email or password")
+var ErrInvalidAuthPayload = errors.New("name, email, and password are needed")
+var ErrInvalidLoginPayload = errors.New("email and password are needed")
+
+type AuthService struct {
+	Repo *authQueries.UserRepository
+}
+
+func (s *AuthService) Register(req authModels.RegisterRequest) (*authModels.AuthResponse, error) {goCover_e487ded031a3__0[0] = 9 ; goCover_e487ded031a3__0[1] = goCover_e487ded031a3_P ; goCover_e487ded031a3__0[2] = 0 ; goCover_e487ded031a3__0[3] = 1;
+	req.Name = strings.TrimSpace(req.Name)
+	req.Email = strings.TrimSpace(strings.ToLower(req.Email))
+
+	if req.Name == "" || req.Email == "" || req.Password == "" {goCover_e487ded031a3__0[8] = 1;
+		return nil, ErrInvalidAuthPayload
+	}
+
+	goCover_e487ded031a3__0[4] = 1;passwordHash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {goCover_e487ded031a3__0[9] = 1;
+		return nil, err
+	}
+
+	goCover_e487ded031a3__0[5] = 1;user := &authModels.User{
+		Name:         req.Name,
+		Email:        req.Email,
+		Interests:    normalizeInterests(req.Interests),
+		PasswordHash: string(passwordHash),
+	}
+
+	if err := s.Repo.Create(user); err != nil {goCover_e487ded031a3__0[10] = 1;
+		return nil, err
+	}
+
+	goCover_e487ded031a3__0[6] = 1;token, err := generateToken(user.ID, user.Email)
+	if err != nil {goCover_e487ded031a3__0[11] = 1;
+		return nil, err
+	}
+
+	goCover_e487ded031a3__0[7] = 1;return &authModels.AuthResponse{Token: token, User: sanitizeUser(*user)}, nil
+}
+
+func (s *AuthService) Login(req authModels.LoginRequest) (*authModels.AuthResponse, error) {goCover_e487ded031a3__1[0] = 11 ; goCover_e487ded031a3__1[1] = goCover_e487ded031a3_P ; goCover_e487ded031a3__1[2] = 1 ; goCover_e487ded031a3__1[3] = 1;
+	req.Email = strings.TrimSpace(strings.ToLower(req.Email))
+
+	if req.Email == "" || req.Password == "" {goCover_e487ded031a3__1[8] = 1;
+		return nil, ErrInvalidLoginPayload
+	}
+
+	goCover_e487ded031a3__1[4] = 1;user, err := s.Repo.GetByEmail(req.Email)
+	if err != nil {goCover_e487ded031a3__1[9] = 1;
+		if errors.Is(err, authQueries.ErrUserNotFound) {goCover_e487ded031a3__1[11] = 1;
+			return nil, ErrInvalidCredentials
+		}
+		goCover_e487ded031a3__1[10] = 1;return nil, err
+	}
+
+	goCover_e487ded031a3__1[5] = 1;if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {goCover_e487ded031a3__1[12] = 1;
+		return nil, ErrInvalidCredentials
+	}
+
+	goCover_e487ded031a3__1[6] = 1;token, err := generateToken(user.ID, user.Email)
+	if err != nil {goCover_e487ded031a3__1[13] = 1;
+		return nil, err
+	}
+
+	goCover_e487ded031a3__1[7] = 1;return &authModels.AuthResponse{Token: token, User: sanitizeUser(*user)}, nil
+}
+
+func (s *AuthService) GetUserByID(id int) (*authModels.User, error) {goCover_e487ded031a3__2[0] = 3 ; goCover_e487ded031a3__2[1] = goCover_e487ded031a3_P ; goCover_e487ded031a3__2[2] = 2 ; goCover_e487ded031a3__2[3] = 1;
+	user, err := s.Repo.GetByID(id)
+	if err != nil {goCover_e487ded031a3__2[5] = 1;
+		return nil, err
+	}
+
+	goCover_e487ded031a3__2[4] = 1;sanitized := sanitizeUser(*user)
+	return &sanitized, nil
+}
+
+func (s *AuthService) UpdateInterests(userID int, interests []string) (*authModels.User, error) {goCover_e487ded031a3__3[0] = 5 ; goCover_e487ded031a3__3[1] = goCover_e487ded031a3_P ; goCover_e487ded031a3__3[2] = 3 ; goCover_e487ded031a3__3[3] = 1;
+	normalized := normalizeInterests(interests)
+	if err := s.Repo.UpdateInterests(userID, normalized); err != nil {goCover_e487ded031a3__3[6] = 1;
+		return nil, err
+	}
+
+	goCover_e487ded031a3__3[4] = 1;user, err := s.Repo.GetByID(userID)
+	if err != nil {goCover_e487ded031a3__3[7] = 1;
+		return nil, err
+	}
+
+	goCover_e487ded031a3__3[5] = 1;sanitized := sanitizeUser(*user)
+	return &sanitized, nil
+}
+
+func (s *AuthService) ParseToken(tokenString string) (jwt.MapClaims, error) {goCover_e487ded031a3__4[0] = 7 ; goCover_e487ded031a3__4[1] = goCover_e487ded031a3_P ; goCover_e487ded031a3__4[2] = 4 ; goCover_e487ded031a3__4[3] = 1;
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {goCover_e487ded031a3__4[7] = 1;
+		return []byte(jwtSecret()), nil
+	})
+	goCover_e487ded031a3__4[4] = 1;if err != nil {goCover_e487ded031a3__4[8] = 1;
+		return nil, err
+	}
+
+	goCover_e487ded031a3__4[5] = 1;claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {goCover_e487ded031a3__4[9] = 1;
+		return nil, errors.New("invalid token")
+	}
+
+	goCover_e487ded031a3__4[6] = 1;return claims, nil
+}
+
+func generateToken(userID int, email string) (string, error) {goCover_e487ded031a3__5[0] = 1 ; goCover_e487ded031a3__5[1] = goCover_e487ded031a3_P ; goCover_e487ded031a3__5[2] = 5 ; goCover_e487ded031a3__5[3] = 1;
+	claims := jwt.MapClaims{
+		"sub":   strconv.Itoa(userID),
+		"email": email,
+		"exp":   time.Now().Add(24 * time.Hour).Unix(),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte(jwtSecret()))
+}
+
+func jwtSecret() string {goCover_e487ded031a3__6[0] = 3 ; goCover_e487ded031a3__6[1] = goCover_e487ded031a3_P ; goCover_e487ded031a3__6[2] = 6 ; goCover_e487ded031a3__6[3] = 1;
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {goCover_e487ded031a3__6[5] = 1;
+		return "eventpulse-dev-secret"
+	}
+	goCover_e487ded031a3__6[4] = 1;return secret
+}
+
+func sanitizeUser(user authModels.User) authModels.User {goCover_e487ded031a3__7[0] = 1 ; goCover_e487ded031a3__7[1] = goCover_e487ded031a3_P ; goCover_e487ded031a3__7[2] = 7 ; goCover_e487ded031a3__7[3] = 1;
+	user.PasswordHash = ""
+	return user
+}
+
+func normalizeInterests(interests []string) []string {goCover_e487ded031a3__8[0] = 7 ; goCover_e487ded031a3__8[1] = goCover_e487ded031a3_P ; goCover_e487ded031a3__8[2] = 8 ; goCover_e487ded031a3__8[3] = 1;
+	seen := map[string]struct{}{}
+	normalized := make([]string, 0, len(interests))
+
+	for _, interest := range interests {goCover_e487ded031a3__8[5] = 1;
+		value := strings.TrimSpace(strings.ToLower(interest))
+		if value == "" {goCover_e487ded031a3__8[8] = 1;
+			continue
+		}
+		goCover_e487ded031a3__8[6] = 1;if _, exists := seen[value]; exists {goCover_e487ded031a3__8[9] = 1;
+			continue
+		}
+		goCover_e487ded031a3__8[7] = 1;seen[value] = struct{}{}
+		normalized = append(normalized, value)
+	}
+
+	goCover_e487ded031a3__8[4] = 1;return normalized
+}

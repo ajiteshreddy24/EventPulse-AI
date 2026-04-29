@@ -167,6 +167,21 @@ func newTestHandlerWithUniqueDriver(t *testing.T, state *fakeDBState) *EventHand
 	return &EventHandler{Service: svc}
 }
 
+func serveAuthenticatedRequest(t *testing.T, handler http.HandlerFunc, method, routePattern, requestPath string, body io.Reader) *httptest.ResponseRecorder {
+	t.Helper()
+
+	authMW := &authMiddleware.AuthMiddleware{Service: &authService.AuthService{}}
+	router := mux.NewRouter()
+	router.Handle(routePattern, authMW.RequireAuth(handler)).Methods(method)
+
+	req := httptest.NewRequest(method, requestPath, body)
+	req.Header.Set("Authorization", "Bearer "+testBearerToken(t, 42))
+
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	return rec
+}
+
 func TestCreateEventSuccess(t *testing.T) {
 	state := &fakeDBState{responses: map[string]fakeResponse{}}
 	now := time.Now()
@@ -256,6 +271,69 @@ func TestGetEventsDatabaseError(t *testing.T) {
 
 	if rec.Code != http.StatusInternalServerError {
 		t.Fatalf("expected 500, got %d", rec.Code)
+	}
+}
+
+func TestGetEventByIDSuccess(t *testing.T) {
+	state := &fakeDBState{responses: map[string]fakeResponse{}}
+	now := time.Now()
+	state.set("WHERE e.id = $1", fakeResponse{
+		columns: []string{"id", "title", "description", "location", "event_date", "capacity", "created_at", "rsvp_count", "user_has_rsvp", "waitlist_count", "user_on_waitlist"},
+		rows: [][]driver.Value{
+			{int64(7), "Demo Event", "Launch night", "NYC", now, int64(50), now, int64(12), true, int64(2), false},
+		},
+	})
+
+	handler := newTestHandlerWithUniqueDriver(t, state)
+	handler.AuthService = &authService.AuthService{}
+
+	req := httptest.NewRequest(http.MethodGet, "/events/7", nil)
+	req = mux.SetURLVars(req, map[string]string{"id": "7"})
+	req.Header.Set("Authorization", "Bearer "+testBearerToken(t, 99))
+	rec := httptest.NewRecorder()
+
+	handler.GetEventByID(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+
+	var event models.Event
+	if err := json.NewDecoder(rec.Body).Decode(&event); err != nil {
+		t.Fatalf("failed to decode event: %v", err)
+	}
+
+	if event.ID != 7 || event.Title != "Demo Event" {
+		t.Fatalf("unexpected event payload: %+v", event)
+	}
+}
+
+func TestGetEventByIDInvalidID(t *testing.T) {
+	handler := &EventHandler{}
+	req := httptest.NewRequest(http.MethodGet, "/events/abc", nil)
+	req = mux.SetURLVars(req, map[string]string{"id": "abc"})
+	rec := httptest.NewRecorder()
+
+	handler.GetEventByID(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", rec.Code)
+	}
+}
+
+func TestGetEventByIDNotFound(t *testing.T) {
+	state := &fakeDBState{responses: map[string]fakeResponse{}}
+	state.set("WHERE e.id = $1", fakeResponse{err: sql.ErrNoRows})
+
+	handler := newTestHandlerWithUniqueDriver(t, state)
+	req := httptest.NewRequest(http.MethodGet, "/events/17", nil)
+	req = mux.SetURLVars(req, map[string]string{"id": "17"})
+	rec := httptest.NewRecorder()
+
+	handler.GetEventByID(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d", rec.Code)
 	}
 }
 
@@ -349,6 +427,170 @@ func TestDeleteEventSuccess(t *testing.T) {
 
 	if rec.Code != http.StatusNoContent {
 		t.Fatalf("expected 204, got %d", rec.Code)
+	}
+}
+
+func TestRSVPAlreadyExists(t *testing.T) {
+	state := &fakeDBState{responses: map[string]fakeResponse{}}
+	now := time.Now()
+	state.set("WHERE e.id = $1", fakeResponse{
+		columns: []string{"id", "title", "description", "location", "event_date", "capacity", "created_at", "rsvp_count", "user_has_rsvp", "waitlist_count", "user_on_waitlist"},
+		rows: [][]driver.Value{
+			{int64(3), "Hack Night", "Build night", "Lab", now, int64(20), now, int64(4), true, int64(0), false},
+		},
+	})
+
+	handler := newTestHandlerWithUniqueDriver(t, state)
+	rec := serveAuthenticatedRequest(t, http.HandlerFunc(handler.RSVP), http.MethodPost, "/events/{id}/rsvp", "/events/3/rsvp", nil)
+
+	if rec.Code != http.StatusConflict {
+		t.Fatalf("expected 409, got %d", rec.Code)
+	}
+}
+
+func TestJoinWaitlistSuccess(t *testing.T) {
+	state := &fakeDBState{responses: map[string]fakeResponse{}}
+	now := time.Now()
+	state.set("WHERE e.id = $1", fakeResponse{
+		columns: []string{"id", "title", "description", "location", "event_date", "capacity", "created_at", "rsvp_count", "user_has_rsvp", "waitlist_count", "user_on_waitlist"},
+		rows: [][]driver.Value{
+			{int64(5), "Career Expo", "Meet recruiters", "Hall A", now, int64(10), now, int64(10), false, int64(3), false},
+		},
+	})
+	state.set("INSERT INTO waitlist_entries", fakeResponse{})
+
+	handler := newTestHandlerWithUniqueDriver(t, state)
+	rec := serveAuthenticatedRequest(t, http.HandlerFunc(handler.JoinWaitlist), http.MethodPost, "/events/{id}/waitlist", "/events/5/waitlist", nil)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+
+	var payload map[string]string
+	if err := json.NewDecoder(rec.Body).Decode(&payload); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+
+	if payload["message"] != "Added to waitlist" {
+		t.Fatalf("unexpected response payload: %+v", payload)
+	}
+}
+
+func TestCreateCommentValidationError(t *testing.T) {
+	handler := &EventHandler{Service: &service.EventService{}}
+	rec := serveAuthenticatedRequest(
+		t,
+		http.HandlerFunc(handler.CreateComment),
+		http.MethodPost,
+		"/events/{id}/comments",
+		"/events/8/comments",
+		bytes.NewBufferString(`{"comment":"   "}`),
+	)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", rec.Code)
+	}
+}
+
+func TestCreateCommentSuccess(t *testing.T) {
+	state := &fakeDBState{responses: map[string]fakeResponse{}}
+	now := time.Now()
+	state.set("WHERE e.id = $1", fakeResponse{
+		columns: []string{"id", "title", "description", "location", "event_date", "capacity", "created_at", "rsvp_count", "user_has_rsvp", "waitlist_count", "user_on_waitlist"},
+		rows: [][]driver.Value{
+			{int64(8), "Music Fest", "Outdoor concert", "Amphitheater", now, int64(80), now, int64(15), false, int64(0), false},
+		},
+	})
+	state.set("INSERT INTO comments", fakeResponse{
+		columns: []string{"id", "event_id", "user_id", "content", "created_at"},
+		rows:    [][]driver.Value{{int64(11), int64(8), int64(42), "Can't wait!", now}},
+	})
+	state.set("FROM users", fakeResponse{
+		columns: []string{"id", "name", "email"},
+		rows:    [][]driver.Value{{int64(42), "Taylor", "taylor@example.com"}},
+	})
+
+	handler := newTestHandlerWithUniqueDriver(t, state)
+	rec := serveAuthenticatedRequest(
+		t,
+		http.HandlerFunc(handler.CreateComment),
+		http.MethodPost,
+		"/events/{id}/comments",
+		"/events/8/comments",
+		bytes.NewBufferString(`{"comment":"Can't wait!"}`),
+	)
+
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("expected 201, got %d", rec.Code)
+	}
+
+	var comment models.Comment
+	if err := json.NewDecoder(rec.Body).Decode(&comment); err != nil {
+		t.Fatalf("failed to decode comment: %v", err)
+	}
+
+	if comment.ID != 11 || comment.User.Name != "Taylor" {
+		t.Fatalf("unexpected comment payload: %+v", comment)
+	}
+}
+
+func TestGetCommentsSuccess(t *testing.T) {
+	state := &fakeDBState{responses: map[string]fakeResponse{}}
+	now := time.Now()
+	state.set("FROM comments c", fakeResponse{
+		columns: []string{"id", "event_id", "user_id", "content", "created_at", "user_id_join", "name", "email"},
+		rows: [][]driver.Value{
+			{int64(1), int64(9), int64(4), "First!", now, int64(4), "Sam", "sam@example.com"},
+			{int64(2), int64(9), int64(5), "Looking forward to it", now, int64(5), "Jordan", "jordan@example.com"},
+		},
+	})
+
+	handler := newTestHandlerWithUniqueDriver(t, state)
+	req := httptest.NewRequest(http.MethodGet, "/events/9/comments", nil)
+	req = mux.SetURLVars(req, map[string]string{"id": "9"})
+	rec := httptest.NewRecorder()
+
+	handler.GetComments(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+
+	var comments []models.Comment
+	if err := json.NewDecoder(rec.Body).Decode(&comments); err != nil {
+		t.Fatalf("failed to decode comments: %v", err)
+	}
+
+	if len(comments) != 2 {
+		t.Fatalf("expected 2 comments, got %d", len(comments))
+	}
+}
+
+func TestDeleteCommentNotFound(t *testing.T) {
+	state := &fakeDBState{responses: map[string]fakeResponse{}}
+	state.set("DELETE FROM comments", fakeResponse{err: queries.ErrEventNotFound})
+
+	handler := newTestHandlerWithUniqueDriver(t, state)
+	req := httptest.NewRequest(http.MethodDelete, "/comments/7", nil)
+	req = mux.SetURLVars(req, map[string]string{"id": "7"})
+	rec := httptest.NewRecorder()
+
+	handler.DeleteComment(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d", rec.Code)
+	}
+}
+
+func TestGetRecommendationsUnauthorized(t *testing.T) {
+	handler := &EventHandler{Service: &service.EventService{}}
+	req := httptest.NewRequest(http.MethodGet, "/events/recommendations", nil)
+	rec := httptest.NewRecorder()
+
+	handler.GetRecommendations(rec, req)
+
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d", rec.Code)
 	}
 }
 
