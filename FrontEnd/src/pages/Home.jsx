@@ -16,7 +16,7 @@ export default function Home() {
           <p className="eyebrow">Smart campus event discovery</p>
           <h1>Find the right events without the noise.</h1>
           <p className="hero-text">
-            EventPulse AI brings student and community events into one calm,
+            EventPulse student community brings student events into one calm,
             searchable place so people can discover, plan, and engage faster.
           </p>
 
