@@ -1,0 +1,323 @@
+//line /Users/sharanthummala/Desktop/SE_Project/EventPulse-AI/BackEnd/internal/service/event_service.go:1:1
+package service
+
+import (
+	"errors"
+	"fmt"
+	"net/smtp"
+	"os"
+	"sort"
+	"strings"
+	"time"
+
+	authQueries "github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/auth/queries"
+	"github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/models"
+	"github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/queries"
+)
+
+type EventService struct {
+	Repo     *queries.EventRepository
+	UserRepo *authQueries.UserRepository
+}
+
+var sendEmail = defaultSendEmail
+
+func (s *EventService) CreateEvent(e *models.Event) error {goCover_de42e385aaa8__0[0] = 1 ; goCover_de42e385aaa8__0[1] = goCover_de42e385aaa8_P ; goCover_de42e385aaa8__0[2] = 0 ; goCover_de42e385aaa8__0[3] = 1;
+	return s.Repo.Create(e)
+}
+
+func (s *EventService) GetEvents(userID *int) ([]models.Event, error) {goCover_de42e385aaa8__1[0] = 1 ; goCover_de42e385aaa8__1[1] = goCover_de42e385aaa8_P ; goCover_de42e385aaa8__1[2] = 1 ; goCover_de42e385aaa8__1[3] = 1;
+	return s.Repo.GetAll(userID)
+}
+
+func (s *EventService) GetEventByID(id int, userID *int) (*models.Event, error) {goCover_de42e385aaa8__2[0] = 1 ; goCover_de42e385aaa8__2[1] = goCover_de42e385aaa8_P ; goCover_de42e385aaa8__2[2] = 2 ; goCover_de42e385aaa8__2[3] = 1;
+	return s.Repo.GetEventByID(id, userID)
+}
+
+func (s *EventService) UpdateEvent(e *models.Event) error {goCover_de42e385aaa8__3[0] = 1 ; goCover_de42e385aaa8__3[1] = goCover_de42e385aaa8_P ; goCover_de42e385aaa8__3[2] = 3 ; goCover_de42e385aaa8__3[3] = 1;
+	return s.Repo.Update(e)
+}
+
+func (s *EventService) DeleteEvent(id int) error {goCover_de42e385aaa8__4[0] = 1 ; goCover_de42e385aaa8__4[1] = goCover_de42e385aaa8_P ; goCover_de42e385aaa8__4[2] = 4 ; goCover_de42e385aaa8__4[3] = 1;
+	return s.Repo.Delete(id)
+}
+
+func (s *EventService) RSVP(userID, eventID int) error {goCover_de42e385aaa8__5[0] = 9 ; goCover_de42e385aaa8__5[1] = goCover_de42e385aaa8_P ; goCover_de42e385aaa8__5[2] = 5 ; goCover_de42e385aaa8__5[3] = 1;
+	event, err := s.Repo.GetEventByID(eventID, &userID)
+	if err != nil {goCover_de42e385aaa8__5[8] = 1;
+		return err
+	}
+	goCover_de42e385aaa8__5[4] = 1;if event.UserHasRSVP {goCover_de42e385aaa8__5[9] = 1;
+		return queries.ErrRSVPAlreadyExists
+	}
+	goCover_de42e385aaa8__5[5] = 1;if event.Capacity > 0 && event.RSVPCount >= event.Capacity {goCover_de42e385aaa8__5[10] = 1;
+		return queries.ErrEventFull
+	}
+
+	goCover_de42e385aaa8__5[6] = 1;err = s.Repo.AddRSVP(userID, eventID)
+	if err != nil {goCover_de42e385aaa8__5[11] = 1;
+		return err
+	}
+
+	goCover_de42e385aaa8__5[7] = 1;_ = s.Repo.RemoveFromWaitlist(userID, eventID)
+	go s.sendRSVPNotification(userID, eventID, "RSVP confirmed", "You have successfully RSVPed to")
+	return nil
+}
+
+func (s *EventService) JoinWaitlist(userID, eventID int) error {goCover_de42e385aaa8__6[0] = 9 ; goCover_de42e385aaa8__6[1] = goCover_de42e385aaa8_P ; goCover_de42e385aaa8__6[2] = 6 ; goCover_de42e385aaa8__6[3] = 1;
+	event, err := s.Repo.GetEventByID(eventID, &userID)
+	if err != nil {goCover_de42e385aaa8__6[8] = 1;
+		return err
+	}
+	goCover_de42e385aaa8__6[4] = 1;if event.UserHasRSVP {goCover_de42e385aaa8__6[9] = 1;
+		return queries.ErrRSVPAlreadyExists
+	}
+	goCover_de42e385aaa8__6[5] = 1;if event.UserOnWaitlist {goCover_de42e385aaa8__6[10] = 1;
+		return queries.ErrAlreadyOnWaitlist
+	}
+	goCover_de42e385aaa8__6[6] = 1;if event.Capacity <= 0 || event.RSVPCount < event.Capacity {goCover_de42e385aaa8__6[11] = 1;
+		return queries.ErrEventFull
+	}
+
+	goCover_de42e385aaa8__6[7] = 1;return s.Repo.AddToWaitlist(userID, eventID)
+}
+
+func (s *EventService) CancelRSVP(userID, eventID int) error {goCover_de42e385aaa8__7[0] = 9 ; goCover_de42e385aaa8__7[1] = goCover_de42e385aaa8_P ; goCover_de42e385aaa8__7[2] = 7 ; goCover_de42e385aaa8__7[3] = 1;
+	event, err := s.Repo.GetEventByID(eventID, &userID)
+	if err != nil {goCover_de42e385aaa8__7[8] = 1;
+		return err
+	}
+
+	goCover_de42e385aaa8__7[4] = 1;err = s.Repo.RemoveRSVP(userID, eventID)
+	if err != nil {goCover_de42e385aaa8__7[9] = 1;
+		return err
+	}
+
+	goCover_de42e385aaa8__7[5] = 1;go s.sendRSVPNotification(userID, eventID, "RSVP cancelled", "Your RSVP has been cancelled for")
+
+	promotedUserID, err := s.Repo.PromoteNextWaitlistedUserWithResult(eventID)
+	if err != nil {goCover_de42e385aaa8__7[10] = 1;
+		return err
+	}
+
+	goCover_de42e385aaa8__7[6] = 1;if promotedUserID != nil {goCover_de42e385aaa8__7[11] = 1;
+		go s.sendPromotionNotification(*promotedUserID, *event)
+	}
+
+	goCover_de42e385aaa8__7[7] = 1;return nil
+}
+
+func (s *EventService) CreateComment(userID, eventID int, content string) (*models.Comment, error) {goCover_de42e385aaa8__8[0] = 5 ; goCover_de42e385aaa8__8[1] = goCover_de42e385aaa8_P ; goCover_de42e385aaa8__8[2] = 8 ; goCover_de42e385aaa8__8[3] = 1;
+	content = strings.TrimSpace(content)
+	if content == "" {goCover_de42e385aaa8__8[6] = 1;
+		return nil, errors.New("comment is required")
+	}
+
+	goCover_de42e385aaa8__8[4] = 1;if _, err := s.Repo.GetEventByID(eventID, nil); err != nil {goCover_de42e385aaa8__8[7] = 1;
+		return nil, err
+	}
+
+	goCover_de42e385aaa8__8[5] = 1;return s.Repo.CreateComment(eventID, userID, content)
+}
+
+func (s *EventService) GetComments(eventID int) ([]models.Comment, error) {goCover_de42e385aaa8__9[0] = 1 ; goCover_de42e385aaa8__9[1] = goCover_de42e385aaa8_P ; goCover_de42e385aaa8__9[2] = 9 ; goCover_de42e385aaa8__9[3] = 1;
+	return s.Repo.GetCommentsByEventID(eventID)
+}
+
+func (s *EventService) DeleteComment(commentID int) error {goCover_de42e385aaa8__10[0] = 1 ; goCover_de42e385aaa8__10[1] = goCover_de42e385aaa8_P ; goCover_de42e385aaa8__10[2] = 10 ; goCover_de42e385aaa8__10[3] = 1;
+	return s.Repo.DeleteComment(commentID)
+}
+
+func (s *EventService) GetRecommendations(userID int) ([]models.Event, error) {goCover_de42e385aaa8__11[0] = 26 ; goCover_de42e385aaa8__11[1] = goCover_de42e385aaa8_P ; goCover_de42e385aaa8__11[2] = 11 ; goCover_de42e385aaa8__11[3] = 1;
+	if s.UserRepo == nil {goCover_de42e385aaa8__11[11] = 1;
+		return []models.Event{}, nil
+	}
+
+	goCover_de42e385aaa8__11[4] = 1;user, err := s.UserRepo.GetByID(userID)
+	if err != nil {goCover_de42e385aaa8__11[12] = 1;
+		return nil, err
+	}
+
+	goCover_de42e385aaa8__11[5] = 1;if len(user.Interests) == 0 {goCover_de42e385aaa8__11[13] = 1;
+		return []models.Event{}, nil
+	}
+
+	goCover_de42e385aaa8__11[6] = 1;events, err := s.Repo.GetAll(&userID)
+	if err != nil {goCover_de42e385aaa8__11[14] = 1;
+		return nil, err
+	}
+
+	goCover_de42e385aaa8__11[7] = 1;now := time.Now()
+	var candidates []models.Event
+	for _, event := range events {goCover_de42e385aaa8__11[15] = 1;
+		if event.UserHasRSVP {goCover_de42e385aaa8__11[20] = 1;
+			continue
+		}
+
+		goCover_de42e385aaa8__11[16] = 1;matches := matchedInterests(event, user.Interests)
+		if len(matches) == 0 {goCover_de42e385aaa8__11[21] = 1;
+			continue
+		}
+
+		goCover_de42e385aaa8__11[17] = 1;score := float64(len(matches))*5 + float64(event.RSVPCount)*0.35
+		reason := fmt.Sprintf("matches your interest in %s", matches[0])
+
+		if event.EventDate.After(now) {goCover_de42e385aaa8__11[22] = 1;
+			hoursAway := event.EventDate.Sub(now).Hours()
+			if hoursAway < 72 {goCover_de42e385aaa8__11[23] = 1;
+				score += 2
+			}
+		}
+
+		goCover_de42e385aaa8__11[18] = 1;if event.Capacity == 0 || event.RSVPCount < event.Capacity {goCover_de42e385aaa8__11[24] = 1;
+			score += 1
+		}
+
+		goCover_de42e385aaa8__11[19] = 1;event.RecommendationScore = score
+		event.RecommendationReason = reason
+
+		candidates = append(candidates, event)
+	}
+
+	goCover_de42e385aaa8__11[8] = 1;sort.Slice(candidates, func(i, j int) bool {goCover_de42e385aaa8__11[25] = 1;
+		if candidates[i].RecommendationScore == candidates[j].RecommendationScore {goCover_de42e385aaa8__11[27] = 1;
+			return candidates[i].EventDate.Before(candidates[j].EventDate)
+		}
+		goCover_de42e385aaa8__11[26] = 1;return candidates[i].RecommendationScore > candidates[j].RecommendationScore
+	})
+
+	goCover_de42e385aaa8__11[9] = 1;if len(candidates) > 5 {goCover_de42e385aaa8__11[28] = 1;
+		candidates = candidates[:5]
+	}
+
+	goCover_de42e385aaa8__11[10] = 1;return candidates, nil
+}
+
+func (s *EventService) GetRSVPedEvents(userID int) ([]models.Event, error) {goCover_de42e385aaa8__12[0] = 1 ; goCover_de42e385aaa8__12[1] = goCover_de42e385aaa8_P ; goCover_de42e385aaa8__12[2] = 12 ; goCover_de42e385aaa8__12[3] = 1;
+	return s.Repo.GetRSVPedEventsByUser(userID)
+}
+
+func recommendationTokens(event models.Event) []string {goCover_de42e385aaa8__13[0] = 5 ; goCover_de42e385aaa8__13[1] = goCover_de42e385aaa8_P ; goCover_de42e385aaa8__13[2] = 13 ; goCover_de42e385aaa8__13[3] = 1;
+	fields := []string{event.Title, event.Description, event.Location}
+	var tokens []string
+	for _, field := range fields {goCover_de42e385aaa8__13[5] = 1;
+		for _, token := range strings.Fields(strings.ToLower(field)) {goCover_de42e385aaa8__13[6] = 1;
+			cleaned := strings.Trim(token, ".,!?;:-_/()[]{}\"'")
+			if len(cleaned) >= 4 {goCover_de42e385aaa8__13[7] = 1;
+				tokens = append(tokens, cleaned)
+			}
+		}
+	}
+
+	goCover_de42e385aaa8__13[4] = 1;return tokens
+}
+
+func matchedInterests(event models.Event, interests []string) []string {goCover_de42e385aaa8__14[0] = 6 ; goCover_de42e385aaa8__14[1] = goCover_de42e385aaa8_P ; goCover_de42e385aaa8__14[2] = 14 ; goCover_de42e385aaa8__14[3] = 1;
+	tokens := recommendationTokens(event)
+	tokenSet := map[string]struct{}{}
+	for _, token := range tokens {goCover_de42e385aaa8__14[6] = 1;
+		tokenSet[token] = struct{}{}
+	}
+
+	goCover_de42e385aaa8__14[4] = 1;var matches []string
+	for _, interest := range interests {goCover_de42e385aaa8__14[7] = 1;
+		if eventMatchesInterest(tokenSet, interest) {goCover_de42e385aaa8__14[8] = 1;
+			matches = append(matches, interest)
+		}
+	}
+
+	goCover_de42e385aaa8__14[5] = 1;return matches
+}
+
+func eventMatchesInterest(tokenSet map[string]struct{}, interest string) bool {goCover_de42e385aaa8__15[0] = 4 ; goCover_de42e385aaa8__15[1] = goCover_de42e385aaa8_P ; goCover_de42e385aaa8__15[2] = 15 ; goCover_de42e385aaa8__15[3] = 1;
+	for _, keyword := range interestKeywords(interest) {goCover_de42e385aaa8__15[5] = 1;
+		if _, exists := tokenSet[keyword]; exists {goCover_de42e385aaa8__15[6] = 1;
+			return true
+		}
+	}
+
+	goCover_de42e385aaa8__15[4] = 1;return false
+}
+
+func interestKeywords(interest string) []string {goCover_de42e385aaa8__16[0] = 3 ; goCover_de42e385aaa8__16[1] = goCover_de42e385aaa8_P ; goCover_de42e385aaa8__16[2] = 16 ; goCover_de42e385aaa8__16[3] = 1;
+	keywords := map[string][]string{
+		"technology":       {"technology", "tech", "ai", "coding", "code", "hackathon", "software", "engineering", "robotics", "startup"},
+		"sports":           {"sports", "sport", "game", "match", "soccer", "football", "basketball", "fitness", "athletics", "tournament"},
+		"music":            {"music", "concert", "band", "choir", "dj", "jam", "performance", "festival"},
+		"art":              {"art", "design", "gallery", "painting", "creative", "photography", "theater", "film"},
+		"networking":       {"networking", "mixer", "social", "meetup", "community", "connect", "alumni"},
+		"career":           {"career", "resume", "interview", "recruiting", "professional", "leadership", "internship", "jobs"},
+		"entrepreneurship": {"entrepreneurship", "startup", "pitch", "venture", "founder", "business", "innovation"},
+		"gaming":           {"gaming", "game", "esports", "nintendo", "xbox", "playstation", "tournament", "board"},
+		"community":        {"community", "service", "volunteer", "charity", "outreach", "cultural", "club"},
+		"wellness":         {"wellness", "yoga", "mindfulness", "health", "meditation", "selfcare", "fitness"},
+	}
+
+	if words, ok := keywords[interest]; ok {goCover_de42e385aaa8__16[5] = 1;
+		return words
+	}
+
+	goCover_de42e385aaa8__16[4] = 1;return []string{interest}
+}
+
+func (s *EventService) sendRSVPNotification(userID, eventID int, subject, prefix string) {goCover_de42e385aaa8__17[0] = 5 ; goCover_de42e385aaa8__17[1] = goCover_de42e385aaa8_P ; goCover_de42e385aaa8__17[2] = 17 ; goCover_de42e385aaa8__17[3] = 1;
+	user, err := s.Repo.GetUserContactByID(userID)
+	if err != nil {goCover_de42e385aaa8__17[6] = 1;
+		return
+	}
+
+	goCover_de42e385aaa8__17[4] = 1;event, err := s.Repo.GetEventByID(eventID, nil)
+	if err != nil {goCover_de42e385aaa8__17[7] = 1;
+		return
+	}
+
+	goCover_de42e385aaa8__17[5] = 1;body := fmt.Sprintf(
+		"Hello %s,\n\n%s %s at %s on %s.\n\nThanks,\nGatorHive",
+		user.Name,
+		prefix,
+		event.Title,
+		event.Location,
+		event.EventDate.Format(time.RFC1123),
+	)
+
+	_ = sendEmail(user.Email, subject, body)
+}
+
+func (s *EventService) sendPromotionNotification(userID int, event models.Event) {goCover_de42e385aaa8__18[0] = 3 ; goCover_de42e385aaa8__18[1] = goCover_de42e385aaa8_P ; goCover_de42e385aaa8__18[2] = 18 ; goCover_de42e385aaa8__18[3] = 1;
+	user, err := s.Repo.GetUserContactByID(userID)
+	if err != nil {goCover_de42e385aaa8__18[5] = 1;
+		return
+	}
+
+	goCover_de42e385aaa8__18[4] = 1;body := fmt.Sprintf(
+		"Hello %s,\n\nA seat opened up and you have been moved from the waitlist to RSVP for %s at %s on %s.\n\nThanks,\nGatorHive",
+		user.Name,
+		event.Title,
+		event.Location,
+		event.EventDate.Format(time.RFC1123),
+	)
+
+	_ = sendEmail(user.Email, "Moved from waitlist", body)
+}
+
+func defaultSendEmail(to, subject, body string) error {goCover_de42e385aaa8__19[0] = 3 ; goCover_de42e385aaa8__19[1] = goCover_de42e385aaa8_P ; goCover_de42e385aaa8__19[2] = 19 ; goCover_de42e385aaa8__19[3] = 1;
+	smtpHost := os.Getenv("SMTP_HOST")
+	smtpPort := os.Getenv("SMTP_PORT")
+	smtpUser := os.Getenv("SMTP_USER")
+	smtpPass := os.Getenv("SMTP_PASS")
+	fromEmail := os.Getenv("SMTP_FROM")
+
+	if smtpHost == "" || smtpPort == "" || smtpUser == "" || smtpPass == "" || fromEmail == "" {goCover_de42e385aaa8__19[5] = 1;
+		return nil
+	}
+
+	goCover_de42e385aaa8__19[4] = 1;auth := smtp.PlainAuth("", smtpUser, smtpPass, smtpHost)
+	message := []byte(
+		"To: " + to + "\r\n" +
+			"Subject: " + subject + "\r\n" +
+			"\r\n" +
+			body + "\r\n",
+	)
+
+	return smtp.SendMail(smtpHost+":"+smtpPort, auth, fromEmail, []string{to}, message)
+}

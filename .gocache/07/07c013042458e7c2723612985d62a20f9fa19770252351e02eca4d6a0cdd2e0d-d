@@ -1,0 +1,56 @@
+//line /Users/sharanthummala/Desktop/SE_Project/EventPulse-AI/BackEnd/internal/auth/middleware/auth_middleware.go:1:1
+package middleware
+
+import (
+	"context"
+	"net/http"
+	"strconv"
+	"strings"
+
+	authService "github.com/ajiteshreddy24/EventPulse-AI/BackEnd/internal/auth/service"
+)
+
+type contextKey string
+
+const userIDContextKey contextKey = "userID"
+
+type AuthMiddleware struct {
+	Service *authService.AuthService
+}
+
+func (m *AuthMiddleware) RequireAuth(next http.Handler) http.Handler {goCover_f0d07502d3c8__0[0] = 10 ; goCover_f0d07502d3c8__0[1] = goCover_f0d07502d3c8_P ; goCover_f0d07502d3c8__0[2] = 0 ; goCover_f0d07502d3c8__0[3] = 1;
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {goCover_f0d07502d3c8__0[4] = 1;
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {goCover_f0d07502d3c8__0[9] = 1;
+			http.Error(w, "missing bearer token", http.StatusUnauthorized)
+			return
+		}
+
+		goCover_f0d07502d3c8__0[5] = 1;tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+		claims, err := m.Service.ParseToken(tokenString)
+		if err != nil {goCover_f0d07502d3c8__0[10] = 1;
+			http.Error(w, "invalid token", http.StatusUnauthorized)
+			return
+		}
+
+		goCover_f0d07502d3c8__0[6] = 1;subject, ok := claims["sub"].(string)
+		if !ok {goCover_f0d07502d3c8__0[11] = 1;
+			http.Error(w, "invalid token subject", http.StatusUnauthorized)
+			return
+		}
+
+		goCover_f0d07502d3c8__0[7] = 1;userID, err := strconv.Atoi(subject)
+		if err != nil {goCover_f0d07502d3c8__0[12] = 1;
+			http.Error(w, "invalid token subject", http.StatusUnauthorized)
+			return
+		}
+
+		goCover_f0d07502d3c8__0[8] = 1;ctx := context.WithValue(r.Context(), userIDContextKey, userID)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func UserIDFromContext(ctx context.Context) (int, bool) {goCover_f0d07502d3c8__1[0] = 1 ; goCover_f0d07502d3c8__1[1] = goCover_f0d07502d3c8_P ; goCover_f0d07502d3c8__1[2] = 1 ; goCover_f0d07502d3c8__1[3] = 1;
+	userID, ok := ctx.Value(userIDContextKey).(int)
+	return userID, ok
+}
